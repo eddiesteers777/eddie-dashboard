@@ -69,6 +69,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "prayer-list",
     "prayer-checks",
     "bible-plan",
+    "bible-carry",
     "readiness-history",
     "training-progress",
     "training-overrides",
@@ -113,6 +114,8 @@ const ACCOUNT_LOCAL_STORAGE_PREFIXES = [
     "fueling-",
     "cross-training-",
     "workout-session-",
+    "prayer-req-",   // prayer requests, one key each (js/prayerRequests.js): synced, cleared on sign-out
+    "bible-note-",   // Bible notes, one key each (js/bibleNotes.js): synced, cleared on sign-out
     "route-",     // saved routes + last map view + pace (js/routeStore.js): synced, cleared on sign-out
     "sb-draft:",  // unsent check-in / workout-log words (js/formDraft.js): device-only
     "sb-plan-dismissed:"   // plan suggestions the coach dismissed (js/planSuggestionsView.js): device-only

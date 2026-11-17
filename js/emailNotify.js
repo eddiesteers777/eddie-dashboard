@@ -243,6 +243,19 @@ export function sendCoachUpdateEmail({ clientEmail, clientName, coachName, text 
     });
 }
 
+// Coach sent the session summary (js/soccerSession.js Wrap up). Only what
+// the player also reads in the app; no private notes.
+export function sendSessionSummaryEmail({ clientEmail, clientName, coachName, dateLabel, text }) {
+    return clientUpdate({
+        toEmail: clientEmail,
+        toName: clientName,
+        subject: "Your session summary",
+        headline: `${coachName || "Your coach"} sent the summary of your session${dateLabel ? ` on ${dateLabel}` : ""}.`,
+        details: text || "",
+        page: "schedule.html"
+    });
+}
+
 // Coach asked the client to check some profile answers (Client Hub).
 export function sendProfileAskEmail({ clientEmail, clientName, coachName, items = [] }) {
     return clientUpdate({

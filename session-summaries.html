@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session summaries | Southbound Coaching</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/schedule.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1c2834">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page schedule-page ssum-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Soccer</div>
+                <h1>Session summaries</h1>
+                <p class="eos-today-phase">What you worked on, newest first.</p>
+            </div>
+        </section>
+
+        <div id="smLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>
+        <div id="smError" class="clients-empty" hidden></div>
+        <div id="smList" class="ssum-tl" hidden></div>
+        <div id="smEmpty" class="clients-empty" hidden><p>No summaries yet. After a session, what you worked on shows up here.</p><a class="clients-btn-primary" href="schedule.html">Back to Soccer</a></div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/sessionSummariesPage.js"></script>
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

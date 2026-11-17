@@ -44,8 +44,8 @@ test("the Sessions tab: soccer clients without a plan, nobody else", () => {
 
 test("training clients: the training pages, no Schedule, no coach pages", () => {
     for (const who of ["running", "strength", "online"]) {
-        assert.deepEqual(allowed(who), ["checkin.html", "clients.html", "cross-training.html", "habits.html",
-            "messages.html", "nutrition.html", "pace-calculator.html", "plan.html", "profile.html", "programs.html", "progress.html", "running.html",
+        assert.deepEqual(allowed(who), ["bible.html", "checkin.html", "clients.html", "cross-training.html", "habits.html",
+            "messages.html", "nutrition.html", "pace-calculator.html", "plan.html", "prayer.html", "profile.html", "programs.html", "progress.html", "running.html",
             "strength.html", "train.html", "updates.html", "workout.html"], who);
     }
 });
@@ -55,8 +55,8 @@ test("Build a Route is a free tool: any signed-in account can open it", () => {
 });
 
 test("soccer clients: Schedule and Habits; Plan + check-in only with a coach plan; no nutrition (the fueling calculator is for everyone)", () => {
-    assert.deepEqual(allowed("soccer"), ["clients.html", "habits.html", "homework.html", "messages.html", "profile.html", "progress.html", "schedule.html", "updates.html"]);
-    assert.deepEqual(allowed("soccerWithPlan"), ["checkin.html", "clients.html", "habits.html", "homework.html", "messages.html", "plan.html", "profile.html", "progress.html", "schedule.html", "updates.html", "workout.html"]);
+    assert.deepEqual(allowed("soccer"), ["bible.html", "clients.html", "habits.html", "homework.html", "messages.html", "prayer.html", "profile.html", "progress.html", "schedule.html", "session-summaries.html", "updates.html"]);
+    assert.deepEqual(allowed("soccerWithPlan"), ["bible.html", "checkin.html", "clients.html", "habits.html", "homework.html", "messages.html", "plan.html", "prayer.html", "profile.html", "progress.html", "schedule.html", "session-summaries.html", "updates.html", "workout.html"]);
     assert.ok(pageAllowed("fueling.html", people.soccerWithPlan) && !pageAllowed("nutrition.html", people.soccerWithPlan));
     assert.ok(pageAllowed("schedule.html", people.hybrid) && pageAllowed("running.html", people.hybrid));
 });
@@ -103,4 +103,30 @@ test("every data-requires and tab/search requirement names a real capability", (
     }
     assert.deepEqual(bad, []);
     for (const page of Object.keys(PAGE_REQUIRES)) assert.ok(existsSync(new URL(page, root)), page);
+});
+
+test("coach roles: admin keeps everything, soccer and online coaches get their own side", async () => {
+    const { capabilitiesFor, CAPABILITIES } = await import("../js/services.js");
+    const admin = capabilitiesFor({ isCoachApproved: true });
+    assert.deepEqual([...admin].sort(), [...CAPABILITIES].sort());
+    assert.ok(capabilitiesFor({ isCoachApproved: true, coachScope: "admin" }).has("admin"));
+    const soccer = capabilitiesFor({ isCoachApproved: true, coachScope: "soccer" });
+    assert.ok(soccer.has("coach") && soccer.has("sessions") && soccer.has("homework"));
+    assert.ok(!soccer.has("admin") && !soccer.has("running") && !soccer.has("plan"));
+    const online = capabilitiesFor({ isCoachApproved: true, coachScope: "online" });
+    assert.ok(online.has("coach") && online.has("running") && online.has("plan"));
+    assert.ok(!online.has("admin") && !online.has("sessions") && !online.has("homework"));
+    const odd = capabilitiesFor({ isCoachApproved: true, coachScope: "wat" });
+    assert.ok(odd.has("coach") && !odd.has("admin") && !odd.has("sessions"));
+    const both = capabilitiesFor({ isCoachApproved: true, coachScope: "soccer", services: ["running"], status: "active" });
+    assert.ok(both.has("coach") && both.has("homework") && both.has("running") && both.has("plan") && !both.has("admin"));
+    assert.equal(accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach", coachScope: "soccer" }).coachScope, "soccer");
+    const emma = accessFromProfile({ status: "active", services: ["running"], isCoachApproved: true, role: "coach", coachScope: "soccer" });
+    assert.equal(pageAllowed("running.html", emma), true);
+    assert.equal(accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach" }).coachScope, "admin");
+    assert.equal(accessFromProfile({ status: "active", services: ["running"], isCoachApproved: false }).coachScope, null);
+    assert.equal(pageAllowed("analytics.html", accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach", coachScope: "soccer" })), false);
+    assert.equal(pageAllowed("schedule.html", accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach", coachScope: "soccer" })), true);
+    assert.equal(pageAllowed("admin-coaches.html", accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach", coachScope: "soccer" })), false);
+    assert.equal(pageAllowed("admin-coaches.html", accessFromProfile({ status: "active", services: [], isCoachApproved: true, role: "coach" })), true);
 });

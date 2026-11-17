@@ -1,0 +1,21 @@
+/* Parent page (parent.html): standalone, no app header. Tokens only. */
+.pr-body{ margin:0; background:var(--bg); color:var(--text); min-height:100vh; }
+.pr-page{ max-width:520px; margin:0 auto; padding:20px 16px 48px; }
+.pr-brand{ display:flex; align-items:center; gap:10px; font-family:var(--font-brand); letter-spacing:.1em; text-transform:uppercase; font-size:18px; margin:4px 0 18px; }
+.pr-lines{ display:flex; flex-direction:column; gap:3px; }
+.pr-lines i{ display:block; height:3px; width:24px; border-radius:2px; }
+.pr-lines i:nth-child(1){ background:var(--primary); } .pr-lines i:nth-child(2){ background:var(--primary-dark); }
+.pr-lines i:nth-child(3){ background:var(--sage); } .pr-lines i:nth-child(4){ background:var(--gold); }
+.pr-page h1{ font-family:var(--font-display); text-transform:uppercase; font-size:38px; line-height:1; margin:6px 0 6px; }
+.pr-page h2{ font-family:var(--font-display); text-transform:uppercase; font-size:22px; margin:20px 0 8px; }
+.pr-sub{ color:var(--text-secondary); margin:0 0 14px; }
+.pr-card{ padding:16px; border-radius:14px; background:var(--sb-glass-bg, var(--surface)); border:1px solid var(--sb-glass-border, transparent); box-shadow:var(--sb-glass-shadow); margin:10px 0; }
+.pr-gold{ border-color:var(--gold); }
+.pr-card h2.pr-focus{ margin:6px 0 8px; }
+.pr-card p{ margin:6px 0; }
+.pr-kick{ font-family:var(--font-mono); font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
+.pr-sage{ color:var(--sage); }
+.pr-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--sb-glass-border, rgba(255,255,255,.12)); }
+.pr-row:first-child{ border-top:0; }
+.pr-foot{ color:var(--text-secondary); font-size:14px; margin-top:22px; }
+.pr-page [hidden]{ display:none !important; }

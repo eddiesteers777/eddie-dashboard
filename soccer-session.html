@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session | Southbound Coaching</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/schedule.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1c2834">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page schedule-page sc-page ss-page">
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow" id="ssEyebrow">Soccer session</div>
+                <h1 id="ssTitle">Session</h1>
+                <p class="eos-today-phase" id="ssLead"><span class="sb-wait"></span></p>
+            </div>
+        </section>
+
+        <p><a class="sc-more" href="soccer-coach.html">&larr; Soccer</a></p>
+
+        <div id="ssLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>
+        <div id="ssError" class="clients-empty" hidden></div>
+
+        <div id="ssBody" hidden>
+            <div class="ss-tabs" role="group" aria-label="Session steps">
+                <button type="button" class="ss-tab on" data-tab="plan" aria-pressed="true">Plan</button>
+                <a class="ss-tab" href="playbook-run.html">Run</a>
+                <button type="button" class="ss-tab" data-tab="wrap" aria-pressed="false">Wrap up</button>
+            </div>
+
+            <div id="ssPlanPane">
+
+            <div id="ssCarry" class="ss-carry" hidden></div>
+
+            <section class="sc-block" aria-labelledby="ssFromTitle">
+                <span class="sp-lbl" id="ssFromTitle">Start from</span>
+                <div class="sc-chips ss-from" id="ssFrom"></div>
+            </section>
+
+            <section class="ss-card">
+                <label class="sp-lbl" for="ssFocus">Focus</label>
+                <input class="sb-dialog-input" id="ssFocus" maxlength="200" placeholder="First touch under pressure" autocomplete="off">
+                <p class="ss-hint">Players see the focus, the drill names and the times. Your notes stay with you.</p>
+            </section>
+
+            <div id="ssParts" class="ss-parts"></div>
+
+            <div class="ss-add">
+                <button type="button" class="sb-btn sb-btn-secondary" id="ssAdd">+ Add a part</button>
+                <button type="button" class="sb-btn sb-btn-secondary" id="ssDrills">+ From drills</button>
+            </div>
+
+            <section class="ss-card">
+                <label class="sp-lbl" for="ssBring">What to bring</label>
+                <input class="sb-dialog-input" id="ssBring" maxlength="200" placeholder="Water, ball, shin guards" autocomplete="off">
+            </section>
+
+            <p class="ss-total" id="ssTotal" aria-live="polite"></p>
+
+            <div class="ss-save">
+                <button type="button" class="sb-btn sb-btn-primary" id="ssSave">Save plan</button>
+                <button type="button" class="sb-btn sb-btn-secondary" id="ssTemplate">Save as template</button>
+                <button type="button" class="sb-btn sb-btn-tertiary" id="ssRemove" hidden>Remove plan</button>
+            </div>
+            </div>
+
+            <div id="ssWrapPane" hidden>
+                <p class="ss-hint" id="ssWrapNote"></p>
+                <div id="ssWrapForm">
+                    <section class="sc-block">
+                        <h2 class="clients-section-title">Who came</h2>
+                        <div class="sc-chips ss-came" id="ssCame" role="group" aria-label="Who came"></div>
+                    </section>
+                    <section class="sc-block">
+                        <h2 class="clients-section-title">What we did</h2>
+                        <div id="ssDid"></div>
+                        <button type="button" class="sb-btn sb-btn-secondary" id="ssDidAdd">+ Add something we did</button>
+                    </section>
+                    <section class="ss-card">
+                        <label class="sp-lbl" for="ssSummary">Group summary</label>
+                        <textarea class="sb-dialog-input ss-note" id="ssSummary" rows="4" maxlength="700" placeholder="How did it go? What stood out?"></textarea>
+                        <p class="ss-hint">Every player who came reads this.</p>
+                    </section>
+                    <section class="sc-block">
+                        <h2 class="clients-section-title">A line for each player <span class="ss-opt">optional</span></h2>
+                        <div id="ssLines"></div>
+                    </section>
+                    <div class="ss-save">
+                        <button type="button" class="sb-btn sb-btn-primary" id="ssSend">Send summary</button>
+                        <button type="button" class="sb-btn sb-btn-secondary" id="ssWrapSave">Save for later</button>
+                    </div>
+                    <p class="ss-hint" id="ssSentNote" hidden></p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/soccerSession.js"></script>
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>

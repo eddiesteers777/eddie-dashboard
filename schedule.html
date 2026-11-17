@@ -68,13 +68,16 @@
                             <p class="sched-weeksum" id="schedWeekSum"></p>
                         </div>
                         <div class="sched-weeknav">
-                            <button type="button" class="clients-btn-secondary" data-week-step="-1" aria-label="Previous week">‹</button>
+                            <span class="sched-view" role="group" aria-label="Calendar view"><button type="button" data-view="week" aria-pressed="true">Week</button><button type="button" data-view="month" aria-pressed="false">Month</button></span>
+                            <button type="button" class="clients-btn-secondary" data-week-step="-1" aria-label="Previous week" id="schedPrev">‹</button>
                             <button type="button" class="clients-btn-secondary" id="schedWeekNow">This week</button>
-                            <button type="button" class="clients-btn-secondary" data-week-step="1" aria-label="Next week">›</button>
+                            <button type="button" class="clients-btn-secondary" data-week-step="1" aria-label="Next week" id="schedNext">›</button>
                             <a class="clients-btn-primary" href="#addSlotBox" id="addSlotLink"><span data-icon="plus"></span> Open time</a>
                         </div>
                     </div>
                     <div id="schedWeek" class="sched-week"></div>
+                    <div id="schedMonth" class="sched-month" hidden></div>
+                    <div id="schedMonthDay" class="sched-month-day" hidden></div>
                     <p class="sched-key"><span class="sched-key-booked">Booked</span><span class="sched-key-asked">Asked</span><span class="sched-key-open">Open time</span></p>
                 </section>
 
@@ -127,10 +130,11 @@
                 <p id="noCoachesMsg" class="clients-card clients-card-note" hidden>You're not connected to your coach yet. <a href="clients.html?tab=share">Connect with your coach</a> first, then their open times show up here.</p>
 
                 <!-- Soccer client: next session + its homework, then booking, then homework. -->
+                <section id="soccerWeek" class="sb-week" aria-labelledby="sbWeekTitle" hidden></section>
                 <section id="soccerNext" class="sb-next" hidden></section>
 
                 <section id="progressWrap" class="sb-progress" aria-labelledby="progressTitle" hidden>
-                    <div class="sb-sec-row"><h2 class="clients-section-title" id="progressTitle">Your progress</h2></div>
+                    <div class="sb-sec-row"><h2 class="clients-section-title" id="progressTitle">Your progress</h2><a class="sb-kick sb-link" href="session-summaries.html">All summaries</a></div>
                     <div class="sb-progress-card">
                         <div class="sb-progress-stats">
                             <div><b id="progSessions">0</b><span>Sessions done</span></div>

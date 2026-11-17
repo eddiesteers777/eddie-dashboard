@@ -498,6 +498,30 @@ export async function listAssignableClients() {
         .sort((a, b) => (a.displayName || a.email).localeCompare(b.displayName || b.email));
 }
 
+// Admin only: link another coach (who is also your client) so their Client Hub opens.
+// Their profile is read directly because coaches have no client-directory entry.
+export async function linkCoachAsClient(coachUid) {
+    const user = await waitForUser();
+    if (!user) throw new Error("not-signed-in");
+    const snap = await getDoc(doc(db, "userProfiles", coachUid));
+    if (!snap.exists()) throw new Error("client-not-found");
+    const p = snap.data() || {};
+    try {
+        await setDoc(doc(db, "coachLinks", user.uid + "_" + coachUid), {
+            coachUid: user.uid, coachName: user.displayName || "Coach", coachEmail: user.email || "",
+            clientUid: coachUid, clientName: String(p.displayName || ""), clientEmail: String(p.email || ""),
+            inviteCode: "", linkedAt: serverTimestamp()
+        });
+    } catch (error) {
+        if (error?.code === "permission-denied") {
+            const links = await listMyClients().catch(() => []);
+            if (links.some(l => l.clientUid === coachUid)) return { already: true };
+        }
+        throw error;
+    }
+    return { already: false };
+}
+
 export async function assignClient(clientUid) {
     const user = await waitForUser();
     if (!user) throw new Error("not-signed-in");

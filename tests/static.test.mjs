@@ -154,6 +154,13 @@ test("Firestore uses single-tab persistent caching", () => {
     assert.doesNotMatch(firebase, /persistentMultipleTabManager/);
 });
 
+test("a device that saw the Firestore hang keeps its data in memory instead of the saved copy", () => {
+    const firebase = read("js/firebase.js");
+    assert.match(firebase, /memoryOnly \? memoryLocalCache\(\)/);
+    assert.match(firebase, /__cloudSyncSdkHungAt/);
+    assert.match(firebase, /__fsMemoryCacheAt/);
+});
+
 test("auth-dependent modules use the centralized isolation guard", () => {
     const firestore = read("js/firestore.js");
     const settings = read("js/settings.js");

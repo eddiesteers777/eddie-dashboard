@@ -43,7 +43,10 @@ import {
     addPrivateNote, updatePrivateNote, deletePrivateNote,
     sendClientUpdate, deleteClientUpdate
 } from "./clientNotes.js";
-import { toast, sbConfirm, friendlyError } from "./ui.js";
+import { toast, sbConfirm, sbChoose, friendlyError } from "./ui.js";
+import { cachedNavAccess } from "./navAccess.js";
+import { auth } from "./firebase.js";
+import { scopeLabel, isAdminScope } from "./services.js";
 import { commentOnResult, isStrengthResult } from "./workoutResults.js";
 import { compareStrength } from "./strengthWorkout.js";
 import { strengthTableHtml } from "./strengthSession.js";
@@ -2254,13 +2257,57 @@ function renderAll() {
     renderSessions();
     // Soccer clients get a Homework tab (under More).
     const hwTab = $("hubHomeworkTab");
-    if (hwTab) hwTab.hidden = !(hasSoccerService(record.profile?.services || []) || (record.requests || []).some(r => r.sessionType === "soccer"));
+    const isSoccerClient = hasSoccerService(record.profile?.services || []) || (record.requests || []).some(r => r.sessionType === "soccer");
+    if (hwTab) hwTab.hidden = !isSoccerClient;
+    // Admin: make this person a coach (online or soccer), or take it away.
+    const roleBtn = $("hubCoachRole");
+    if (roleBtn) {
+        const me = cachedNavAccess();
+        const theirUid = record.uid || new URLSearchParams(location.search).get("uid") || "";
+        const isCoachNow = record.profile?.isCoachApproved === true;
+        roleBtn.hidden = !(me?.isCoach && isAdminScope(me.coachScope)) || !theirUid || theirUid === (auth.currentUser?.uid || "");
+        $("hubCoachRoleText").textContent = isCoachNow ? `Coach: ${scopeLabel(record.profile?.coachScope)}` : "Make coach";
+        roleBtn.onclick = () => changeCoachRole(theirUid, isCoachNow, record.profile?.coachScope);
+    }
+    // Coach: see the player's own Soccer page, read-only.
+    const previewBtn = $("hubPreview");
+    if (previewBtn) {
+        previewBtn.hidden = false;
+        previewBtn.href = `soccer-preview.html?uid=${encodeURIComponent(record.uid || new URLSearchParams(location.search).get("uid") || "")}`;
+    }
     renderWorkouts();
     renderChanges();
     renderSuggestions();
     renderNotes();
     renderProfileFresh();
     import("./icons.js").then(m => m.hydrate());
+}
+
+// ---- Coach access (admin only) ----
+
+async function changeCoachRole(uid, isCoachNow, current) {
+    const name = record.profile?.displayName || "this person";
+    const choice = await sbChoose(
+        `${name} keeps their account. A coach gets a Coach tab and sees only their own side. Online coaches see running, strength and online clients. Soccer coaches see soccer clients, the Soccer page and the Playbook. Only an admin can change this.`,
+        {
+            title: isCoachNow ? "Change coach access" : "Make this person a coach",
+            choices: [
+                { value: "online", label: "Online coach", primary: current === "online" },
+                { value: "soccer", label: "Soccer coach", primary: current === "soccer" },
+                { value: "admin", label: "Admin" },
+                ...(isCoachNow ? [{ value: "none", label: "Remove coach access" }] : [])
+            ]
+        });
+    if (!choice) return;
+    if (choice === "admin" && !(await sbConfirm("An admin can see everything, change roles and read your website inbox. Make them an admin?", { title: "Make an admin?", confirmLabel: "Make admin", danger: true }))) return;
+    try {
+        const { setCoachScope } = await import("./userProfile.js");
+        await setCoachScope(uid, choice);
+        toast(choice === "none" ? "Coach access removed." : "Saved.", "success");
+        location.reload();
+    } catch (error) {
+        toast(friendlyError(error, "change coach access"), "error");
+    }
 }
 
 // ---- Services (what they signed up for; their menu follows it) ----

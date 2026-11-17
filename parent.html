@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="referrer" content="no-referrer">
+    <title>Soccer update | Southbound Coaching</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/parent.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1c2834">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+</head>
+
+<body class="pr-body">
+
+    <main class="pr-page">
+        <div class="pr-brand" aria-label="Southbound">
+            <span class="pr-lines" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span>Southbound</span>
+        </div>
+
+        <div id="prLoading" class="pr-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:80%"></span><span class="sb-skeleton" style="width:60%"></span></div></div>
+
+        <div id="prBody" hidden>
+            <h1 id="prTitle"></h1>
+            <p class="pr-sub" id="prSub"></p>
+            <section id="prLast" class="pr-card pr-gold" hidden></section>
+            <section id="prHw" hidden>
+                <h2>Homework</h2>
+                <div class="pr-card" id="prHwList"></div>
+            </section>
+            <p class="pr-foot">This page shows only what your coach shares. Questions? Ask your coach directly.</p>
+        </div>
+
+        <div id="prGone" class="pr-card" hidden>
+            <h1>This link isn't active</h1>
+            <p class="pr-sub">Your coach may have turned it off or sent a new one. Ask them for the latest link.</p>
+        </div>
+    </main>
+
+    <script type="module" src="js/parentPage.js"></script>
+
+</body>
+
+</html>

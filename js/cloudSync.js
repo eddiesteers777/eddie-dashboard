@@ -15,11 +15,11 @@ import { waitForUser, getCurrentUser } from "./auth.js";
 import { doc, getDoc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { mergeSyncedValue } from "./syncMerge.js";
 import { trail } from "./signInTrail.js";
-import { withTimeout, parseSyncDocRest, READ_LIMIT_MS, WRITE_LIMIT_MS } from "./syncTimeout.js";
+import { withTimeout, parseSyncDocRest, mergeIntoCloud, buildSyncCommitBody, READ_LIMIT_MS, WRITE_LIMIT_MS } from "./syncTimeout.js";
 import { hasPulled, NOT_PULLED_ERROR, UNREACHABLE_ERROR } from "./syncGuard.js";
 
-const EXACT_KEYS = ["training-progress","training-overrides","featured-training-categories","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","strength-settings","gear-shoes","strength-history","running-log","running-planned","personal-records","running-programs","training-programs","planner-events","coach-plans","coach-exercise-videos","coach-workout-library","coach-plan-prompts","coros-sent","coros-auto-send","coros-run-history","coros-fitness-history","coros-health-history","coros-health-backfill","coros-laps","readiness-checkins","readiness-settings","readiness-history","profile-checks","coach-health-reviewed","coach-queue-done","coach-pinned-chats","session-rpe","race-results","athlete-model","coach-athlete-model","workout-shares","water-presets","prayer-list","prayer-checks","bible-plan"];
-const KEY_PREFIXES = ["nutrition-","fueling-","cross-training-","workout-session-","route-"];
+const EXACT_KEYS = ["training-progress","training-overrides","featured-training-categories","habits","entries","user-settings","__eddieos_coros_data_snapshot_v2","strength-plan","strength-exercise-library","strength-workout-library","strength-workout-favorites","strength-schedule","strength-settings","gear-shoes","strength-history","running-log","running-planned","personal-records","running-programs","training-programs","planner-events","coach-plans","coach-exercise-videos","coach-workout-library","coach-plan-prompts","coros-sent","coros-auto-send","coros-run-history","coros-fitness-history","coros-health-history","coros-health-backfill","coros-laps","readiness-checkins","readiness-settings","readiness-history","profile-checks","coach-health-reviewed","coach-queue-done","coach-pinned-chats","session-rpe","race-results","athlete-model","coach-athlete-model","workout-shares","water-presets","prayer-list","prayer-checks","bible-plan","bible-carry"];
+const KEY_PREFIXES = ["nutrition-","fueling-","cross-training-","workout-session-","route-","prayer-req-","bible-note-"];
 // Plans the coach can see through sharedPlans (js/coachAccess.js).
 const MIRRORED_KEYS = ["training-programs","running-programs","coach-plans"];
 const META_KEY = "__cloudSyncMeta";
@@ -347,33 +347,43 @@ export async function pushToCloud({ force=false }={}){
     // instead of overwriting when both sides changed (js/syncMerge.js).
     const agreed=lastSyncedData()||{};
     trail("push-start",changed.length+" keys");
-    const result=await withTimeout(runTransaction(db,async tx=>{
+    let result;
+    const viaSdk=async()=>withTimeout(runTransaction(db,async tx=>{
       const snap=await tx.get(refs.data);
-      const existing=snap.exists()?(snap.data()||{}):{};
-      const cloudData={...(existing.data||{})};
-      const cloudTimes={...(existing.keyUpdatedAt||{})};
-      const now=Date.now();
-      for(const key of Object.keys(localData)){
-        const lt=Number(localTimes[key]||0) || now;
-        const ct=Number(cloudTimes[key]||0);
-        if(!(key in cloudData)||lt>=ct){
-          let value=localData[key];
-          if(key in cloudData && cloudData[key]!==value && cloudData[key]!==(agreed[key]??null)){
-            try{
-              const merged=mergeSyncedValue(key,value,cloudData[key],agreed[key]??null);
-              if(merged){
-                value=merged.value;
-                for(const [k,v] of merged.extra||[]){ if(!(k in cloudData)){ cloudData[k]=v; cloudTimes[k]=lt; } }
-              }
-            }catch(e){ console.warn("Sync merge failed for",key,e); }
-          }
-          cloudData[key]=value; cloudTimes[key]=lt;
-        }
-      }
-      tx.set(refs.data,{data:cloudData,keyUpdatedAt:cloudTimes,updatedAt:serverTimestamp()});
+      const merged=mergeIntoCloud({existing:snap.exists()?(snap.data()||{}):{},localData,localTimes,agreed});
+      tx.set(refs.data,{data:merged.data,keyUpdatedAt:merged.times,updatedAt:serverTimestamp()});
       tx.set(refs.meta,{v:version,updatedAt:serverTimestamp()});
-      return {data:cloudData,times:cloudTimes};
+      return merged;
     }),WRITE_LIMIT_MS,"push-timeout");
+    // The same save over plain HTTPS, for a phone or computer whose own connection hangs.
+    const viaRest=async()=>{
+      const root=firestoreRestBase.replace("https://firestore.googleapis.com/v1/","");
+      for(let attempt=0;attempt<2;attempt++){
+        const token=await user.getIdToken();
+        const raw=await restDoc(user,uid,"localStorage");
+        const parsed=parseSyncDocRest(raw);
+        const merged=mergeIntoCloud({existing:parsed,localData,localTimes,agreed});
+        const body=buildSyncCommitBody({docsRoot:root,uid,data:merged.data,times:merged.times,version,updateTime:raw?.updateTime||null});
+        const response=await withTimeout(fetch(`https://firestore.googleapis.com/v1/${root.split("/documents")[0]}/documents:commit`,{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(body)}),WRITE_LIMIT_MS,"push-timeout");
+        if(response.ok) return merged;
+        // Another device saved in between: read again and redo it once.
+        if((response.status===409||response.status===400||response.status===412)&&attempt===0) continue;
+        throw Object.assign(new Error("rest-"+response.status),{code:"rest-"+response.status});
+      }
+      throw Object.assign(new Error("rest-conflict"),{code:"rest-conflict"});
+    };
+    if(sdkHungRecently()){
+      trail("push-fast","this device's connection hangs: saving over HTTPS");
+      result=await viaRest();
+    }else{
+      try{ result=await viaSdk(); }
+      catch(e){
+        if(e?.code!=="push-timeout") throw e;
+        rememberSdkHung();
+        trail("push-fallback","save hung: saving over HTTPS");
+        result=await viaRest();
+      }
+    }
     trail("push-done",changed.length+" keys");
     if(!currentAccountIs(uid)) return false;
     const finalTimes=result.times;

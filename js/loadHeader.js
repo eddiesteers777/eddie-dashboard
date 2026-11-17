@@ -81,7 +81,7 @@ const BOTTOM_TABS = [
     { key: "plan", label: "Plan", icon: "calendar", href: "plan.html", color: "var(--primary)", requires: "client+plan" },
     // Someone who only books sessions (soccer, no plan) gets them as a tab
     // of their own; with a plan, they're in the Plan tab's week.
-    { key: "sessions", label: "Soccer", icon: "calendar", href: "schedule.html", color: "var(--primary)", requires: "client+sessions+!nutrition+!fueling", pages: ["schedule.html", "homework.html"] },
+    { key: "sessions", label: "Soccer", icon: "calendar", href: "schedule.html", color: "var(--primary)", requires: "client+sessions+!nutrition+!fueling", pages: ["schedule.html", "homework.html", "session-summaries.html"] },
     // Five tabs at most (redesign step 3, Eddie 2026-10-14): training
     // clients get Today · Plan · Train · Fuel · More, the coach Today ·
     // Coach · Train · Fuel · More. Habits stays a tab only for accounts
@@ -101,6 +101,8 @@ const PAGE_TAB = {
     "strength.html": "train",
     "cross-training.html": "train",
     "habits.html": "habits",
+    "prayer.html": "habits",
+    "bible.html": "habits",
     "homework.html": "homework",
     "nutrition.html": "health",
     "fueling.html": "health",
@@ -118,6 +120,11 @@ const PAGE_TAB = {
     "playbook.html": "more", "playbook-board.html": "more", "playbook-drills.html": "more", "playbook-practice.html": "more", "playbook-run.html": "more", "playbook-fitness.html": "more", "playbook-results.html": "more", "playbook-conditioning.html": "more", "playbook-season.html": "more", "playbook-roster.html": "more", "playbook-team.html": "more", "playbook-game.html": "more",
     "clients.html": "coach",
     "client.html": "coach",
+    "soccer-preview.html": "coach",
+    "soccer-coach.html": "coach",
+    "soccer-session.html": "coach",
+    "soccer-homework.html": "coach",
+    "admin-coaches.html": "coach",
     "profile.html": "more",
     "updates.html": "more",
     "messages.html": "more",
@@ -172,17 +179,19 @@ const SEARCH_DESTINATIONS = [
     { label: "Fueling", href: "fueling.html", icon: "fuel", color: "var(--amber)", requires: "fueling" },
     // The coach's personal tools (built around his own race block) --
     // hidden from clients, like their More rows and menu links.
-    { label: "75-Day Challenge", href: "75day.html", icon: "flame", color: "var(--green)", requires: "coach" },
-    { label: "Analytics", href: "analytics.html", icon: "trendingUp", color: "var(--amber)", requires: "coach" },
-    { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard", color: "var(--purple-light)", requires: "coach" },
-    { label: "Weekly Planning", href: "planning.html", icon: "edit", color: "var(--primary)", requires: "coach", also: ["plan next week", "chatbot", "brief"] },
+    { label: "75-Day Challenge", href: "75day.html", icon: "flame", color: "var(--green)", requires: "admin" },
+    { label: "Analytics", href: "analytics.html", icon: "trendingUp", color: "var(--amber)", requires: "admin" },
+    { label: "Weekly Review", href: "weekly-review.html", icon: "clipboard", color: "var(--purple-light)", requires: "admin" },
+    { label: "Weekly Planning", href: "planning.html", icon: "edit", color: "var(--primary)", requires: "admin", also: ["plan next week", "chatbot", "brief"] },
     { label: "My Progress", href: "progress.html", icon: "trendingUp", color: "var(--primary)", requires: "client+progress" },
     { label: "Programs", href: "programs.html", icon: "target", color: "var(--indigo)", requires: "running,strength" },
     { label: "Free Tools", href: "tools.html", icon: "timer", color: "var(--primary)", also: ["pace calculator", "fueling calculator", "playbook", "heart rate zones", "race splits", "training paces", "gel", "drills", "tactics board", "75 hard", "75 soft", "75 day challenge", "habit tracker"] },
     { label: "Pace Calculator", href: "pace-calculator.html", icon: "timer", color: "var(--primary)", requires: "running" },
     { label: "Build a Route", href: "routes.html", icon: "pin", color: "var(--primary)", requires: "running", also: ["route builder", "map", "gpx", "loop", "sidewalk", "trail", "plan a run", "watch route"] },
-    { label: "Southbound Playbook", href: "playbook.html", icon: "clipboard", color: "var(--sage)", requires: "coach", also: ["tactical board", "drills", "practice plan", "roster", "lineup", "soccer"] },
+    { label: "Southbound Playbook", href: "playbook.html", icon: "clipboard", color: "var(--sage)", requires: "coach+sessions", also: ["tactical board", "drills", "practice plan", "roster", "lineup", "soccer"] },
     { label: "Messages", href: "messages.html", icon: "messageSquare", color: "var(--primary)", requires: "client+updates", also: ["message coach", "chat", "text coach", "ask coach"] },
+    { label: "My Coaches", href: "admin-coaches.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "admin", also: ["coaches", "soccer coach", "online coach", "emma", "emily"] },
+    { label: "Soccer (coach)", href: "soccer-coach.html", icon: "calendar", color: "var(--purple)", requires: "coach+sessions", also: ["soccer", "homework", "sessions", "requests"] },
     { label: "Coach Dashboard", href: "coach.html", icon: "target", color: "var(--red)", requires: "coach" },
     { label: "Clients", href: "clients.html", icon: "users", color: "var(--sky, var(--cyan))", requires: "coach" },
     { label: "Soccer", href: "schedule.html", icon: "calendar", color: "var(--purple)", requires: "client+sessions", also: ["schedule", "sessions", "book a session"] },

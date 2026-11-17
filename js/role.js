@@ -33,6 +33,13 @@ export function setCachedRole(role) {
 }
 
 // Whether to show the coach's personal marathon plan (js/marathonData.js).
+// Admin coach only: a soccer or online coach has their own plan, not this one.
 export function showsPersonalPlan() {
-    return cachedRole() === "coach";
+    if (cachedRole() !== "coach") return false;
+    try {
+        const scope = JSON.parse(localStorage.getItem("sb-nav-access") || "null")?.coachScope;
+        return !scope || scope === "admin";
+    } catch {
+        return true;
+    }
 }

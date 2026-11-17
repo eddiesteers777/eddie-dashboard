@@ -166,7 +166,9 @@ test("an approved coach can directly assign an active client without an invite",
     // Reading a link that doesn't exist yet is refused (the rule reads the
     // stored doc), so assignClient must write without checking first: that
     // pre-read made every assignment fail on the live site (2026-10-03).
-    await assertFails(getDoc(link));
+    // (The admin coach may read any link since 2026-11-15, so this pre-read is
+    // allowed for the admin and returns "missing"; a scoped coach still fails.)
+    assert.equal((await getDoc(link)).exists(), false);
     await assertSucceeds(setDoc(link, {
         coachUid: "coach",
         coachName: "Coach One",
@@ -2053,4 +2055,203 @@ test("session plans: well-formed only, the id must be the coach's, a coach can't
     // The fullest plan still saves (12 lines, longest text, 40 clients).
     const full = sp("coach", { title: "t".repeat(80), focus: "f".repeat(200), bring: "b".repeat(200), lines: Array(12).fill("6:00 PM|" + "n".repeat(60) + "|120 min"), clientUids: Array.from({ length: 40 }, (_, i) => "u".repeat(28) + String(i).padStart(2, "0")) });
     await assertSucceeds(setDoc(doc(as("coach"), "sessionPlans/coach_s1_2026-10-23".replace("10-23", "10-22")), full));
+});
+
+// ---- Coach roles (2026-11-14): admin / online / soccer ----
+
+async function seedScopedCoaches() {
+    await env.withSecurityRulesDisabled(async ctx => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "userProfiles/soccerCoach"), { uid: "soccerCoach", role: "coach", isCoachApproved: true, coachScope: "soccer", status: "active", services: [], displayName: "Soccer Coach", email: "s@example.com" });
+        await setDoc(doc(db, "userProfiles/onlineCoach"), { uid: "onlineCoach", role: "coach", isCoachApproved: true, coachScope: "online", status: "active", services: [], displayName: "Online Coach", email: "o@example.com" });
+        await setDoc(doc(db, "userProfiles/kid"), { uid: "kid", role: "client", isCoachApproved: false, status: "pending", services: [], displayName: "Kid", email: "k@example.com" });
+        await setDoc(doc(db, "coachLinks/soccerCoach_kid"), { coachUid: "soccerCoach", clientUid: "kid" });
+        await setDoc(doc(db, "coachLinks/onlineCoach_kid"), { coachUid: "onlineCoach", clientUid: "kid" });
+    });
+}
+
+test("roles: the admin can turn an existing client into a soccer or online coach", async () => {
+    await seedScopedCoaches();
+    await assertSucceeds(updateDoc(doc(as("coach"), "userProfiles/client"), { role: "coach", isCoachApproved: true, coachScope: "soccer" }));
+    await assertSucceeds(updateDoc(doc(as("coach"), "userProfiles/client"), { coachScope: "online" }));
+    await assertFails(updateDoc(doc(as("coach"), "userProfiles/client"), { coachScope: "owner" }));
+});
+
+test("roles: a scoped coach cannot promote anyone or change a role", async () => {
+    await seedScopedCoaches();
+    for (const who of ["soccerCoach", "onlineCoach"]) {
+        const db = as(who);
+        await assertFails(updateDoc(doc(db, "userProfiles/kid"), { role: "coach", isCoachApproved: true, coachScope: "admin" }));
+        await assertFails(updateDoc(doc(db, "userProfiles/kid"), { isCoachApproved: true }));
+        await assertFails(updateDoc(doc(db, "userProfiles/kid"), { coachScope: "soccer" }));
+        await assertFails(updateDoc(doc(db, who === "soccerCoach" ? "userProfiles/soccerCoach" : "userProfiles/onlineCoach"), { coachScope: "admin" }));
+    }
+});
+
+test("roles: a scoped coach approves clients only inside their own side", async () => {
+    await seedScopedCoaches();
+    await assertSucceeds(updateDoc(doc(as("soccerCoach"), "userProfiles/kid"), { status: "active", services: ["soccer_group"] }));
+    await assertFails(updateDoc(doc(as("soccerCoach"), "userProfiles/kid"), { services: ["running"] }));
+    await assertFails(updateDoc(doc(as("onlineCoach"), "userProfiles/kid"), { services: ["soccer_1on1"] }));
+    await assertSucceeds(updateDoc(doc(as("onlineCoach"), "userProfiles/kid"), { services: ["running"] }));
+});
+
+test("roles: only the admin reads the website inbox, and nobody can self-grant a scope", async () => {
+    await seedScopedCoaches();
+    await env.withSecurityRulesDisabled(async ctx => { await setDoc(doc(ctx.firestore(), "inquiries/q9"), { note: "hi" }); });
+    await assertSucceeds(getDoc(doc(as("coach"), "inquiries/q9")));
+    await assertFails(getDoc(doc(as("soccerCoach"), "inquiries/q9")));
+    await assertFails(getDoc(doc(as("onlineCoach"), "inquiries/q9")));
+    await assertFails(updateDoc(doc(as("client"), "userProfiles/client"), { coachScope: "admin", isCoachApproved: true }));
+    await assertFails(setDoc(doc(as("new9"), "userProfiles/new9"), { uid: "new9", role: "client", isCoachApproved: false, coachScope: "admin", status: "pending", services: [], displayName: "N", email: "n@example.com" }));
+});
+
+test("roles: the admin reads every coach's links, bookings and homework; a scoped coach does not read another coach's", async () => {
+    await seedScopedCoaches();
+    await env.withSecurityRulesDisabled(async ctx => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "bookingRequests/sb1"), { coachUid: "soccerCoach", clientUid: "kid", status: "requested", dates: ["2026-11-20"], startTime: "09:00" });
+        await setDoc(doc(db, "homework/hw1"), { coachUid: "soccerCoach", clientUid: "kid", title: "Wall passes", status: "active", logs: [] });
+    });
+    const admin = as("coach");
+    await assertSucceeds(getDocs(query(collection(admin, "coachLinks"), where("coachUid", "==", "soccerCoach"))));
+    await assertSucceeds(getDocs(query(collection(admin, "bookingRequests"), where("coachUid", "==", "soccerCoach"))));
+    await assertSucceeds(getDocs(query(collection(admin, "homework"), where("coachUid", "==", "soccerCoach"))));
+    const other = as("onlineCoach");
+    await assertFails(getDocs(query(collection(other, "bookingRequests"), where("coachUid", "==", "soccerCoach"))));
+    await assertFails(getDocs(query(collection(other, "homework"), where("coachUid", "==", "soccerCoach"))));
+    await assertFails(getDocs(query(collection(other, "coachLinks"), where("coachUid", "==", "soccerCoach"))));
+    await assertFails(getDoc(doc(other, "homework/hw1")));
+});
+
+test("parent links: one exact address reads it with no sign-in, nobody lists, only the linked coach writes", async () => {
+    await seedScopedCoaches();
+    const token = "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6";
+    const body = (extra = {}) => ({ coachUid: "soccerCoach", clientUid: "kid", firstName: "Ava", coachFirst: "Coach", last: { date: "2026-11-14", focus: "Weak foot", workedOn: "Passing", nextTime: "Head up" }, homework: "Wall passes|2 of 3", updatedAt: serverTimestamp(), ...extra });
+    const coach = as("soccerCoach");
+    await assertSucceeds(setDoc(doc(coach, `parentLinks/${token}`), body()));
+    // Someone with the exact address, signed out, reads that one document.
+    const anon = env.unauthenticatedContext().firestore();
+    await assertSucceeds(getDoc(doc(anon, `parentLinks/${token}`)));
+    // Nobody lists them, and a short or guessable address is refused.
+    await assertFails(getDocs(collection(anon, "parentLinks")));
+    await assertFails(getDocs(collection(as("onlineCoach"), "parentLinks")));
+    await assertFails(getDoc(doc(anon, "parentLinks/short")));
+    await assertSucceeds(getDocs(query(collection(coach, "parentLinks"), where("coachUid", "==", "soccerCoach"))));
+    // Only the linked coach creates; a coach not linked to the player cannot, nor can the player or anyone else.
+    await assertFails(setDoc(doc(as("coach"), "parentLinks/b1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"), body({ coachUid: "coach" })));
+    await assertFails(setDoc(doc(as("coach"), "parentLinks/c1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"), body({ coachUid: "soccerCoach" })));
+    await assertFails(setDoc(doc(as("kid"), "parentLinks/d1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"), body()));
+    // The wrong fields or too much text are refused (no email, no notes).
+    await assertFails(setDoc(doc(coach, "parentLinks/e1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"), body({ email: "p@example.com" })));
+    await assertFails(setDoc(doc(coach, "parentLinks/f1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"), body({ homework: "x".repeat(901) })));
+    // Refresh by the owner works, by another coach does not, and deleting ends the link.
+    await assertSucceeds(updateDoc(doc(coach, `parentLinks/${token}`), { homework: "Wall passes|3 of 3", updatedAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(as("onlineCoach"), `parentLinks/${token}`), { homework: "hacked", updatedAt: serverTimestamp() }));
+    await assertFails(deleteDoc(doc(as("onlineCoach"), `parentLinks/${token}`)));
+    await assertFails(deleteDoc(doc(anon, `parentLinks/${token}`)));
+    await assertSucceeds(deleteDoc(doc(coach, `parentLinks/${token}`)));
+    assert.equal((await getDoc(doc(anon, `parentLinks/${token}`))).exists(), false, "the link is gone once deleted");
+});
+
+test("roles: only the admin can link another coach as their client", async () => {
+    await seedScopedCoaches();
+    const data = (coachUid, email) => ({ coachUid, coachName: "X", coachEmail: email, clientUid: "soccerCoach", clientName: "Soccer Coach", clientEmail: "s@example.com", inviteCode: "", linkedAt: serverTimestamp() });
+    await assertFails(setDoc(doc(as("onlineCoach"), "coachLinks/onlineCoach_soccerCoach"), data("onlineCoach", "o@example.com")));
+    await assertSucceeds(setDoc(doc(as("coach"), "coachLinks/coach_soccerCoach"), data("coach", "coach@example.com")));
+    // Then the admin's Client Hub opens for them (a linked coach can read the client's record boundary).
+    await assertSucceeds(getDoc(doc(as("coach"), "userProfiles/soccerCoach")));
+});
+
+test("roles: every soccer coach reads all soccer homework, but cannot change another coach's, and other roles cannot read it", async () => {
+    await seedScopedCoaches();
+    await env.withSecurityRulesDisabled(async ctx => {
+        const db = ctx.firestore();
+        await setDoc(doc(db, "userProfiles/soccerCoach2"), { uid: "soccerCoach2", role: "coach", isCoachApproved: true, coachScope: "soccer", status: "active", services: [], displayName: "Second Soccer", email: "s2@example.com" });
+        await setDoc(doc(db, "homework/hw1"), { coachUid: "soccerCoach", clientUid: "kid", title: "Wall passes", status: "active", logs: [] });
+        await setDoc(doc(db, "bookingRequests/sb1"), { coachUid: "soccerCoach", clientUid: "kid", status: "requested", dates: ["2026-11-20"], startTime: "09:00" });
+    });
+    const second = as("soccerCoach2");
+    await assertSucceeds(getDocs(collection(second, "homework")));
+    await assertSucceeds(getDoc(doc(second, "homework/hw1")));
+    await assertFails(updateDoc(doc(second, "homework/hw1"), { title: "Mine now" }));
+    await assertFails(deleteDoc(doc(second, "homework/hw1")));
+    await assertFails(getDoc(doc(second, "bookingRequests/sb1")));
+    await assertFails(getDocs(collection(as("onlineCoach"), "homework")));
+    await assertFails(getDocs(collection(as("client"), "homework")));
+});
+
+test("roles: the admin lists and reads coach profiles; nobody else can list profiles", async () => {
+    await seedScopedCoaches();
+    await assertSucceeds(getDocs(query(collection(as("coach"), "userProfiles"), where("isCoachApproved", "==", true))));
+    await assertSucceeds(getDoc(doc(as("coach"), "userProfiles/soccerCoach")));
+    await assertFails(getDocs(query(collection(as("coach"), "userProfiles"))));
+    await assertFails(getDocs(query(collection(as("soccerCoach"), "userProfiles"), where("isCoachApproved", "==", true))));
+    await assertFails(getDocs(query(collection(as("client"), "userProfiles"), where("isCoachApproved", "==", true))));
+    await assertFails(getDoc(doc(as("onlineCoach"), "userProfiles/soccerCoach")));
+});
+
+test("session plan notes: only the coach who owns the plan reads or writes them", async () => {
+    await seedScopedCoaches();
+    const mine = doc(as("coach"), "sessionPlanNotes/coach_s1_2026-11-17");
+    const good = { coachUid: "coach", key: "s1", date: "2026-11-17", notes: ["Two touch max.", "", "x".repeat(300)], updatedAt: serverTimestamp() };
+    assert.equal((await getDoc(mine)).exists(), false);
+    await assertSucceeds(setDoc(mine, good));
+    await assertSucceeds(getDoc(mine));
+    await assertSucceeds(setDoc(mine, { ...good, notes: Array(12).fill("y".repeat(300)) }));
+    await assertFails(setDoc(mine, { ...good, notes: Array(13).fill("a") }));
+    await assertFails(setDoc(mine, { ...good, notes: Array(12).fill("y".repeat(301)) }));
+    await assertFails(setDoc(mine, { ...good, extra: 1 }));
+    await assertFails(setDoc(doc(as("coach"), "sessionPlanNotes/coach_s2_2026-11-17"), good));
+    await assertFails(getDoc(doc(as("client"), "sessionPlanNotes/coach_s1_2026-11-17")));
+    await assertFails(getDoc(doc(as("soccerCoach"), "sessionPlanNotes/coach_s1_2026-11-17")));
+    await assertFails(setDoc(doc(as("soccerCoach"), "sessionPlanNotes/coach_s1_2026-11-17"), { ...good, coachUid: "soccerCoach" }));
+    await assertFails(setDoc(doc(as("client"), "sessionPlanNotes/client_s1_2026-11-17"), { ...good, coachUid: "client" }));
+    await assertSucceeds(deleteDoc(mine));
+});
+
+test("session wraps: coach only, shape checked, and sending a log still needs the real booking", async () => {
+    await seedScopedCoaches();
+    const mine = doc(as("coach"), "sessionWraps/coach_s1_2026-11-17");
+    const good = { coachUid: "coach", key: "s1", date: "2026-11-17", missed: ["kid"], parts: [{ name: "Rondo", status: "done", how: "Sharp" }], summary: "Great energy.", lines: { kid: "Opens up on the right." }, updatedAt: serverTimestamp() };
+    assert.equal((await getDoc(mine)).exists(), false);
+    await assertSucceeds(setDoc(mine, good));
+    await assertSucceeds(setDoc(mine, { ...good, sentAt: serverTimestamp() }));
+    await assertSucceeds(getDoc(mine));
+    await assertFails(setDoc(mine, { ...good, summary: "x".repeat(701) }));
+    await assertFails(setDoc(mine, { ...good, parts: Array(13).fill({ name: "a" }) }));
+    await assertFails(setDoc(mine, { ...good, lines: "text" }));
+    await assertFails(setDoc(mine, { ...good, extra: 1 }));
+    await assertFails(setDoc(doc(as("coach"), "sessionWraps/coach_s2_2026-11-17"), good));
+    await assertFails(getDoc(doc(as("client"), "sessionWraps/coach_s1_2026-11-17")));
+    await assertFails(getDoc(doc(as("soccerCoach"), "sessionWraps/coach_s1_2026-11-17")));
+    await assertFails(setDoc(doc(as("client"), "sessionWraps/client_s1_2026-11-17"), { ...good, coachUid: "client" }));
+    await assertSucceeds(deleteDoc(mine));
+});
+
+test("session wraps carry list and session templates: coach only, lists by coachUid", async () => {
+    await seedScopedCoaches();
+    const wrap = doc(as("coach"), "sessionWraps/coach_s1_2026-11-17");
+    const base = { coachUid: "coach", key: "s1", date: "2026-11-17", missed: [], parts: [], summary: "x", lines: { kid: "y" }, carry: ["kid"], updatedAt: serverTimestamp() };
+    await assertSucceeds(setDoc(wrap, base));
+    await assertFails(setDoc(wrap, { ...base, carry: Array(41).fill("a") }));
+    await assertFails(setDoc(wrap, { ...base, carry: "kid" }));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "sessionWraps"), where("coachUid", "==", "coach"))));
+    await assertFails(getDocs(query(collection(as("coach"), "sessionWraps"), where("coachUid", "==", "soccerCoach"))));
+    await assertFails(getDocs(query(collection(as("soccerCoach"), "sessionWraps"), where("coachUid", "==", "coach"))));
+    const t = doc(as("coach"), "sessionTemplates/coach_t1");
+    const tpl = { coachUid: "coach", name: "First touch night", focus: "First touch", bring: "Ball", parts: [{ kind: "Warm-up", name: "Rondo", mins: 10, note: "private" }], updatedAt: serverTimestamp() };
+    assert.equal((await getDoc(t)).exists(), false);
+    await assertSucceeds(setDoc(t, tpl));
+    await assertSucceeds(getDoc(t));
+    await assertSucceeds(getDocs(query(collection(as("coach"), "sessionTemplates"), where("coachUid", "==", "coach"))));
+    await assertFails(setDoc(t, { ...tpl, name: "" }));
+    await assertFails(setDoc(t, { ...tpl, parts: Array(13).fill({}) }));
+    await assertFails(setDoc(t, { ...tpl, extra: 1 }));
+    await assertFails(setDoc(doc(as("coach"), "sessionTemplates/other_t1"), tpl));
+    await assertFails(getDoc(doc(as("client"), "sessionTemplates/coach_t1")));
+    await assertFails(getDoc(doc(as("soccerCoach"), "sessionTemplates/coach_t1")));
+    await assertFails(getDocs(query(collection(as("soccerCoach"), "sessionTemplates"), where("coachUid", "==", "coach"))));
+    await assertFails(setDoc(doc(as("client"), "sessionTemplates/client_t1"), { ...tpl, coachUid: "client" }));
+    await assertSucceeds(deleteDoc(t));
 });

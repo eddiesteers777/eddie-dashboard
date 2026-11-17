@@ -49,8 +49,16 @@ function paint() {
 
 // Three quick tests of the cloud connection, run once per page load:
 // did sign-in answer, does an SDK read answer, does a plain HTTPS read answer.
-const probe = { auth: "testing…", sdk: "testing…", rest: "testing…" };
-const probeLines = () => [`sign-in answered: ${probe.auth}`, `cloud read (app): ${probe.sdk}`, `cloud read (https): ${probe.rest}`];
+const probe = { auth: "testing…", sdk: "testing…", rest: "testing…", idb: "testing…", memLong: "testing…", memAuto: "testing…" };
+const probeLines = () => [
+    `app keeps data in: ${globalThis.__sbFirestoreCache || "unknown"}`,
+    `sign-in answered: ${probe.auth}`,
+    `cloud read (app): ${probe.sdk}`,
+    `cloud read (https): ${probe.rest}`,
+    `saved storage opens: ${probe.idb}`,
+    `app read, no saved copy, plain requests: ${probe.memLong}`,
+    `app read, no saved copy, streaming: ${probe.memAuto}`
+];
 const timed = async (label, work, limit = 15000) => {
     const start = performance.now();
     try {
@@ -65,13 +73,30 @@ const timed = async (label, work, limit = 15000) => {
         user = await waitForUser();
         return user ? "signed in" : "signed OUT";
     });
-    if (!user) { probe.sdk = probe.rest = "skipped (no sign-in)"; return; }
+    // Does the phone's saved storage (IndexedDB, where the app's offline copy lives) open at all?
+    timed("idb", () => new Promise((resolve, reject) => {
+        const request = indexedDB.open("sb-loadcheck-probe");
+        request.onsuccess = () => { request.result.close(); resolve("ok"); };
+        request.onerror = () => reject(new Error("error"));
+        request.onblocked = () => reject(new Error("blocked"));
+    }), 8000);
+    if (!user) { probe.sdk = probe.rest = probe.memLong = probe.memAuto = "skipped (no sign-in)"; return; }
     await Promise.all([
         timed("sdk", async () => {
             const [{ db }, fs] = await Promise.all([import("./firebase.js"), import("https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js")]);
             const snap = await fs.getDoc(fs.doc(db, "userProfiles", user.uid));
             return snap.exists() ? "ok" : "ok (no profile)";
         }),
+        // The same read from a second, throwaway connection that keeps nothing on the phone. It isn't signed in, so a
+        // quick "permission-denied" counts as answered: it proves the connection works.
+        ...[["memLong", { experimentalForceLongPolling: true }], ["memAuto", { experimentalAutoDetectLongPolling: true }]].map(([label, opts]) =>
+            timed(label, async () => {
+                const [{ app }, fa, fs] = await Promise.all([import("./firebase.js"), import("https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js"), import("https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js")]);
+                const copy = fa.initializeApp(app.options, "loadcheck-" + label + Date.now());
+                const db2 = fs.initializeFirestore(copy, { localCache: fs.memoryLocalCache(), ...opts });
+                try { await fs.getDoc(fs.doc(db2, "userProfiles", user.uid)); return "ok"; }
+                catch (error) { if (error?.code === "permission-denied") return "answered (denied, as expected)"; throw error; }
+            })),
         timed("rest", async () => {
             const { firestoreRestBase } = await import("./firebase.js");
             const token = await user.getIdToken();

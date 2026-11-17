@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview as client | Southbound Coaching</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/clients.css">
+    <link rel="stylesheet" href="css/homework.css">
+    <link rel="stylesheet" href="css/schedule.css">
+    <link rel="stylesheet" href="css/homeworkMoment.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1c2834">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icons/favicon-32.png">
+</head>
+
+<body>
+
+    <div id="header"></div>
+
+    <main class="clients-page schedule-page sp-preview">
+
+        <div class="sp-banner" id="spBanner" role="status" hidden></div>
+
+        <section class="eos-today-hero">
+            <div>
+                <div class="eos-today-eyebrow">Player view</div>
+                <h1>Player view</h1>
+                <p class="eos-today-phase">Sessions, homework and plan, the way the player sees them.</p>
+            </div>
+        </section>
+
+        <div id="spLoading" class="clients-card"><div class="sb-loading" role="status"><span class="sr-only">Loading…</span><span class="sb-skeleton" style="width:92%"></span><span class="sb-skeleton" style="width:76%"></span><span class="sb-skeleton" style="width:58%"></span></div></div>
+        <div id="spMissing" class="clients-empty" hidden></div>
+        <div id="spBody" hidden>
+            <div class="sb-seg sp-tabs" role="tablist" aria-label="What the player sees">
+                <button type="button" role="tab" class="on" data-tab="today" aria-selected="true">Today</button>
+                <button type="button" role="tab" data-tab="week" aria-selected="false">Week</button>
+                <button type="button" role="tab" data-tab="homework" aria-selected="false">Homework</button>
+                <button type="button" role="tab" data-tab="plan" aria-selected="false" id="spTabPlan" hidden>Plan</button>
+            </div>
+            <div id="spPaneToday" class="sp-pane">
+                <section id="spGreet" class="sp-block"></section>
+                <section id="spNext" class="sb-next" hidden></section>
+                <section id="spHw" class="sp-block"></section>
+                <section id="spProgress" class="sb-progress" hidden></section>
+            </div>
+            <div id="spPaneWeek" class="sp-pane" hidden>
+                <section id="spWeek" class="sb-week" aria-labelledby="sbWeekTitle"></section>
+            </div>
+            <div id="spPanePlan" class="sp-pane" hidden>
+                <section id="spPlan" class="sp-block"></section>
+            </div>
+            <div id="spPaneHomework" class="sp-pane" hidden>
+                <section id="spHwAll" class="sp-block"></section>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="js/loadHeader.js"></script>
+    <script type="module" src="js/icons.js"></script>
+    <script type="module" src="js/soccerPreview.js"></script>
+    <script src="js/registerSW.js"></script>
+
+</body>
+
+</html>
