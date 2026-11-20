@@ -521,6 +521,7 @@
   ],
   "styles": [
     "css/analytics.css",
+    "css/appLight.css",
     "css/appLook.css",
     "css/athlete-state.css",
     "css/checkin.css",

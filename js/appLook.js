@@ -134,6 +134,36 @@ function applyState(svg, state) {
     if ("ball" in state) { const b = q('[data-m="ball"]'); b.setAttribute("cx", state.ball.x); b.setAttribute("cy", state.ball.y); }
 }
 
+
+// Light ground (Eddie, 2026-11-19): text on the ground is dark, so any panel with a dark fill must say so. The
+// classes in css/appLight.css cover the known panels; this tags every other dark-filled box once it is drawn
+// (html.al-on .al-dk resets the text tokens to light and gives it a solid dark base). Debounced, never on the ground.
+const GROUND = [203, 216, 227];
+const lum = c => { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }; return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2]); };
+function stops(str) {
+    return [...str.matchAll(/rgba?\(([^)]+)\)/g)].map(m => { const n = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number); const a = n.length > 3 ? n[3] : 1; return [0, 1, 2].map(i => n[i] * a + GROUND[i] * (1 - a)); });
+}
+export function tagDarkSurfaces(root = document.body) {
+    if (!document.documentElement.classList.contains("al-on")) return;
+    const vw = innerWidth, vh = innerHeight;
+    for (const e of root.querySelectorAll("*")) {
+        if (e.classList.contains("al-dk") || e.closest(".al-dk,.al-bg,svg")) continue;
+        const r = e.getBoundingClientRect();
+        if (r.width < 28 || r.height < 20 || (r.width >= vw - 2 && r.height >= vh - 2)) continue;
+        const cs = getComputedStyle(e);
+        const list = stops(cs.backgroundColor === "rgba(0, 0, 0, 0)" ? "" : cs.backgroundColor).concat(/gradient/.test(cs.backgroundImage) ? stops(cs.backgroundImage) : []);
+        if (!list.length) continue;
+        if (list.reduce((t, c) => t + lum(c), 0) / list.length < .22) e.classList.add("al-dk");
+    }
+}
+let tagTimer = 0;
+function watchSurfaces() {
+    const run = () => { tagTimer = 0; tagDarkSurfaces(); };
+    const queue = () => { if (!tagTimer) tagTimer = setTimeout(run, 250); };
+    new MutationObserver(queue).observe(document.body, { childList: true, subtree: true });
+    queue(); addEventListener("load", queue); addEventListener("resize", queue);
+}
+
 export function applyAppLook() {
     if (document.documentElement.classList.contains("al-on") || document.documentElement.classList.contains("sb-guest")) return;
     if (!document.querySelector('link[href$="css/appLook.css"]')) {
@@ -141,6 +171,10 @@ export function applyAppLook() {
         link.rel = "stylesheet";
         link.href = new URL("../css/appLook.css", import.meta.url).href;
         document.head.append(link);
+        const light = document.createElement("link");
+        light.rel = "stylesheet";
+        light.href = new URL("../css/appLight.css", import.meta.url).href;
+        document.head.append(light);
     }
     const page = (location.pathname.split("/").pop() || "index.html").replace(".html", "") || "index";
     const bg = document.createElement("div");
@@ -149,4 +183,5 @@ export function applyAppLook() {
     // Plain fog-blue ground on every app page (Eddie, 2026-11-02): no drawing behind the page.
     document.body.prepend(bg);
     document.documentElement.classList.add("al-on");
+    watchSurfaces();
 }
