@@ -7,14 +7,15 @@
 
 // Light ground (Eddie, 2026-11-19): text on the ground is dark, so any panel with a dark fill must say so. The
 // classes in css/skin.css (part 3) cover the known panels; this tags every other dark-filled box once it is drawn
-// (html.al-on .al-dk resets the text tokens to light and gives it a solid dark base). Debounced, never on the ground.
+// (html.al-light .al-dk resets the text tokens to light and gives it a solid dark base). Debounced, never on the ground.
+// Night mode (2026-11-25) has a dark ground, so nothing needs tagging there; switching back to Light tags again.
 const GROUND = [203, 216, 227];
 const lum = c => { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }; return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2]); };
 function stops(str) {
     return [...str.matchAll(/rgba?\(([^)]+)\)/g)].map(m => { const n = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number); const a = n.length > 3 ? n[3] : 1; return [0, 1, 2].map(i => n[i] * a + GROUND[i] * (1 - a)); });
 }
 export function tagDarkSurfaces(root = document.body) {
-    if (!document.documentElement.classList.contains("al-on")) return;
+    if (!document.documentElement.classList.contains("al-light")) return;
     const vw = innerWidth, vh = innerHeight;
     for (const e of root.querySelectorAll("*")) {
         if (e.classList.contains("al-dk") || e.closest(".al-dk,.al-bg,svg")) continue;
@@ -31,7 +32,7 @@ function watchSurfaces() {
     const run = () => { tagTimer = 0; tagDarkSurfaces(); };
     const queue = () => { if (!tagTimer) tagTimer = setTimeout(run, 250); };
     new MutationObserver(queue).observe(document.body, { childList: true, subtree: true });
-    queue(); addEventListener("load", queue); addEventListener("resize", queue);
+    queue(); addEventListener("load", queue); addEventListener("resize", queue); addEventListener("southbound-look", queue);
 }
 
 // Every app page sets the look before its first paint (js/appLookBoot.js and css/skin.css in <head>), so html.al-on
@@ -55,5 +56,7 @@ export function applyAppLook() {
         document.body.prepend(bg);
     }
     document.documentElement.classList.add("al-on");
+    // A page without js/appLookBoot.js has no mode switch: it keeps the light look, as before.
+    if (!window.SouthboundLook) document.documentElement.classList.add("al-light");
     watchSurfaces();
 }

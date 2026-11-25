@@ -189,6 +189,9 @@
 .st-row-switch{ cursor:pointer; }
 .st-row-stack{ flex-direction:column; align-items:stretch; gap:12px; }
 .st-row-stack > .st-btn{ align-self:flex-start; }
+/* Look > Mode (2026-11-25): three buttons in one row that wraps on a narrow phone; the chosen one is the lens. */
+.st-seg{ display:flex; flex-wrap:wrap; gap:8px; }
+.st-seg .st-btn{ flex:1 1 auto; padding:0 14px; }
 .st-row-pair{ min-height:52px; padding:12px 0; font:500 15px/1.3 var(--font-body); color:var(--text-secondary); }
 .st-value{ color:var(--text); font:500 13px/1.3 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; display:inline-flex; }
 .st-row-link{ text-decoration:none; transition:color .18s ease; }

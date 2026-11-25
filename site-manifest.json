@@ -260,6 +260,7 @@
     "js/loadPublicHeader.js",
     "js/loadState.js",
     "js/loadTrail.js",
+    "js/lookSetting.js",
     "js/marathonCoros.js",
     "js/marathonCorosButton.js",
     "js/marathonData.js",

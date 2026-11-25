@@ -5,7 +5,10 @@
    Part 1: the colour tokens. Every colour that sets the look is named here once, so a colourway or Night mode
            (later steps, like Anchor Board's css/skin.css) only has to redefine these.
    Part 2: the fog-blue glass look (Eddie, 2026-10-29), what was css/appLook.css.
-   Part 3: the mist ground with deep cards (Eddie, option B, 2026-11-19), what was css/appLight.css.
+   Part 3: the mist ground with deep cards (Eddie, option B, 2026-11-19), what was css/appLight.css. Light mode only:
+           every rule hangs off html.al-light, which js/appLookBoot.js sets unless the person picked Night.
+   Night mode (step 3, 2026-11-25) is parts 1 and 2 alone: the fog-blue ground and glass the app wore from
+   2026-10-29 to 2026-11-20. The choice (Light, Night, Match device) lives in Settings, under Look.
    The old instrument drawings (compass, calendar, bottle...) were removed: nothing has drawn them since 2026-11-02. */
 
 /* Part 1: colour tokens (Fog). The *-rgb ones are "r,g,b" for rgba(var(--x),alpha). */
@@ -421,28 +424,28 @@ html.al-on .rd-wpreset.is-on,html.al-on .rd-amount[data-amount] .rd-wpreset.is-o
 }
 
 
-/* Part 3: mist ground, deep glass cards. Text sitting on the ground uses the dark ink tokens; anything inside a
-   dark surface resets them to light. A NEW panel class goes in both lists below (and in the glass list in part 2),
+/* Part 3: mist ground, deep glass cards (light mode only: html.al-light). Text sitting on the ground uses the dark
+   ink tokens; anything inside a dark surface resets them to light. A NEW panel class goes in both lists below (and in the glass list in part 2),
    or its text goes dark on dark. js/appLook.js tags any other dark box it finds (.al-dk). */
 /* The page ground is pale mist; every card, bar and dialog stays deep blue. */
-html.al-on{
+html.al-light{
   --text:var(--sb-ink);--text-secondary:var(--sb-ink-2);--muted:var(--sb-ink-3);--border:rgba(19,32,43,.16);
   background:var(--sb-ground)!important;color:var(--text)}
-.al-bg{background:linear-gradient(180deg,var(--sb-ground-top) 0%,var(--sb-ground) 55%,var(--sb-ground-low) 100%)!important}
-.al-bg::before{background:radial-gradient(60% 38% at 72% 10%,rgba(255,255,255,.55),transparent)!important}
-.al-bg::after{opacity:.06!important}
-html.al-on .eos-today-card,html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card,html.al-on .card,html.al-on .ci-strip,html.al-on .clients-empty,html.al-on .coach-focus,html.al-on .coach-tools,html.al-on .ct-attach-panel,html.al-on .ct-card,html.al-on .ct-library-empty.visible,html.al-on .ct-modal,html.al-on .ct-stat,html.al-on .fx-day,html.al-on .gear-empty-state.visible,html.al-on .hw-card,html.al-on .hw-prep,html.al-on .pl-card,html.al-on .planner-grid,html.al-on .rd-dialog,html.al-on .running-modal,html.al-on .sched-request-row,html.al-on .sched-session-row,html.al-on .sched-slot-card,html.al-on .sched-slot-form,html.al-on .sched-weekwrap,html.al-on .strength-editor-modal,html.al-on .wr-lead,html.al-on .wr-reading,html.al-on .tr-panel,html.al-on .tr-recent,html.al-on .eos-coach-card,html.al-on .eos-client-package,html.al-on #todayCard,html.al-on #weekSection,html.al-on #weekMilesCard,html.al-on #todayHabits,html.al-on #coachCardSection,html.al-on #nutritionSnap,html.al-on #featuredTraining,html.al-on #readinessCard,html.al-on #readinessCard .rd-body,html.al-on .eos-navbar,html.al-on .coach-soccer-link,html.al-on .coach-queue,html.al-on .coach-week,html.al-on .eos-bottomnav,html.al-on .eos-mobile-icon-btn,html.al-on .eos-mobile-topbar .account-btn,html.al-on .eos-dropdown,html.al-on dialog{
+html.al-light .al-bg{background:linear-gradient(180deg,var(--sb-ground-top) 0%,var(--sb-ground) 55%,var(--sb-ground-low) 100%)!important}
+html.al-light .al-bg::before{background:radial-gradient(60% 38% at 72% 10%,rgba(255,255,255,.55),transparent)!important}
+html.al-light .al-bg::after{opacity:.06!important}
+html.al-light .eos-today-card,html.al-light .eos-nutrition-snap,html.al-light .clients-card,html.al-light .rd-card,html.al-light .card,html.al-light .ci-strip,html.al-light .clients-empty,html.al-light .coach-focus,html.al-light .coach-tools,html.al-light .ct-attach-panel,html.al-light .ct-card,html.al-light .ct-library-empty.visible,html.al-light .ct-modal,html.al-light .ct-stat,html.al-light .fx-day,html.al-light .gear-empty-state.visible,html.al-light .hw-card,html.al-light .hw-prep,html.al-light .pl-card,html.al-light .planner-grid,html.al-light .rd-dialog,html.al-light .running-modal,html.al-light .sched-request-row,html.al-light .sched-session-row,html.al-light .sched-slot-card,html.al-light .sched-slot-form,html.al-light .sched-weekwrap,html.al-light .strength-editor-modal,html.al-light .wr-lead,html.al-light .wr-reading,html.al-light .tr-panel,html.al-light .tr-recent,html.al-light .eos-coach-card,html.al-light .eos-client-package,html.al-light #todayCard,html.al-light #weekSection,html.al-light #weekMilesCard,html.al-light #todayHabits,html.al-light #coachCardSection,html.al-light #nutritionSnap,html.al-light #featuredTraining,html.al-light #readinessCard,html.al-light #readinessCard .rd-body,html.al-light .eos-navbar,html.al-light .coach-soccer-link,html.al-light .coach-queue,html.al-light .coach-week,html.al-light .eos-bottomnav,html.al-light .eos-mobile-icon-btn,html.al-light .eos-mobile-topbar .account-btn,html.al-light .eos-dropdown,html.al-light dialog{
   --text:var(--sb-on-card);--text-secondary:var(--sb-on-card-2);--muted:var(--sb-on-card-3);--border:rgba(var(--sb-mist-rgb),.14);color:var(--text)}
-html.al-on :is(.coach-soccer-link,.coach-queue,.coach-week,.eos-today-card,.eos-nutrition-snap,.clients-card,.rd-card,.card,.ci-strip,.clients-empty,.coach-focus,.coach-tools,.ct-card,.ct-stat,.hw-card,.hw-prep,.pl-card,.sched-request-row,.sched-session-row,.sched-slot-card,.sched-slot-form,.sched-weekwrap,.wr-lead,.wr-reading,.fx-day,.planner-grid,#todayCard,#weekSection,#weekMilesCard,#todayHabits,#coachCardSection,#nutritionSnap,#featuredTraining,#readinessCard .rd-body):not(.rd-none){
+html.al-light :is(.coach-soccer-link,.coach-queue,.coach-week,.eos-today-card,.eos-nutrition-snap,.clients-card,.rd-card,.card,.ci-strip,.clients-empty,.coach-focus,.coach-tools,.ct-card,.ct-stat,.hw-card,.hw-prep,.pl-card,.sched-request-row,.sched-session-row,.sched-slot-card,.sched-slot-form,.sched-weekwrap,.wr-lead,.wr-reading,.fx-day,.planner-grid,#todayCard,#weekSection,#weekMilesCard,#todayHabits,#coachCardSection,#nutritionSnap,#featuredTraining,#readinessCard .rd-body):not(.rd-none){
   background:linear-gradient(180deg,var(--sb-card-top),var(--sb-card-bottom))!important;border-color:rgba(var(--sb-mist-rgb),.2)!important;
   box-shadow:inset 0 1px 0 rgba(var(--sb-mist-rgb),.16),0 10px 22px rgba(30,50,70,.28)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
-html.al-on :is(.eos-navbar,.eos-bottomnav){background:rgba(26,43,59,.94)!important}
-html.al-on .al-bg~*{}
-html.al-on .eos-today-eyebrow,html.al-on .coach-clients-all{color:var(--text-secondary)!important}
-html.al-on .coach-clients-all{color:var(--sb-ink-link)!important;font-weight:600}
-html.al-on .al-dk{--text:var(--sb-on-card);--text-secondary:var(--sb-on-card-2);--muted:var(--sb-on-card-3);--border:rgba(var(--sb-mist-rgb),.14);color:var(--text);background-color:var(--sb-card-base)}
-html.al-on :is(.an-nav,.habits-view-toggle,.habits-hero-stats,.habits-hero-stat,.running-pill-strip,.fx-log,.fx-plan-hint,.strength-workspace-nav,.sb-wstrip,.panel,.tr-panel,.st-id,.st-panel){--text:var(--sb-on-card);--text-secondary:var(--sb-on-card-2);--muted:var(--sb-on-card-3);color:var(--text);background-color:var(--sb-card-base)}
-html.al-on .sb-eyebrow{color:var(--text-secondary)!important}
-html.al-on .coach-pb .coach-clients-all{color:var(--sb-ink-link)!important}
-html.al-on{--gl:linear-gradient(180deg,var(--sb-card-top),var(--sb-card-bottom))}
-html.al-on :is(.running-calendar-wrap,.running-day-detail,.running-fold,.running-tl-card,.more-page .more-row,.more-page .eos-more-account,.running-view-toggle,.running-section-tabs){--text:var(--sb-on-card);--text-secondary:var(--sb-on-card-2);--muted:var(--sb-on-card-3);color:var(--text)}
+html.al-light :is(.eos-navbar,.eos-bottomnav){background:rgba(26,43,59,.94)!important}
+html.al-light .al-bg~*{}
+html.al-light .eos-today-eyebrow,html.al-light .coach-clients-all{color:var(--text-secondary)!important}
+html.al-light .coach-clients-all{color:var(--sb-ink-link)!important;font-weight:600}
+html.al-light .al-dk{--text:var(--sb-on-card);--text-secondary:var(--sb-on-card-2);--muted:var(--sb-on-card-3);--border:rgba(var(--sb-mist-rgb),.14);color:var(--text);background-color:var(--sb-card-base)}
+html.al-light :is(.an-nav,.habits-view-toggle,.habits-hero-stats,.habits-hero-stat,.running-pill-strip,.fx-log,.fx-plan-hint,.strength-workspace-nav,.sb-wstrip,.panel,.tr-panel,.st-id,.st-panel){--text:var(--sb-on-card);--text-secondary:var(--sb-on-card-2);--muted:var(--sb-on-card-3);color:var(--text);background-color:var(--sb-card-base)}
+html.al-light .sb-eyebrow{color:var(--text-secondary)!important}
+html.al-light .coach-pb .coach-clients-all{color:var(--sb-ink-link)!important}
+html.al-light{--gl:linear-gradient(180deg,var(--sb-card-top),var(--sb-card-bottom))}
+html.al-light :is(.running-calendar-wrap,.running-day-detail,.running-fold,.running-tl-card,.more-page .more-row,.more-page .eos-more-account,.running-view-toggle,.running-section-tabs){--text:var(--sb-on-card);--text-secondary:var(--sb-on-card-2);--muted:var(--sb-on-card-3);color:var(--text)}
