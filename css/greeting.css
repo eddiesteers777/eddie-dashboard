@@ -5,7 +5,7 @@
 .gr-text{ font-family:var(--font-display, "Big Shoulders Display", Impact, sans-serif); font-weight:800; letter-spacing:.01em; fill:var(--text, #F1EBDD); }
 .gr-line-path{ fill:none; stroke-width:6; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; animation:gr-draw 1.6s cubic-bezier(.3,.6,.3,1) forwards; animation-delay:calc(.2s + var(--i, 0) * .15s); }
 .gr-wipe{ stroke-linecap:butt; stroke-dasharray:1; stroke-dashoffset:1; animation:gr-draw 1.5s .2s cubic-bezier(.3,.6,.3,1) forwards; }
-.gr-dot{ fill:#E6EEF5; transform-box:fill-box; transform-origin:center; opacity:0; animation:gr-pop .55s 1.7s cubic-bezier(.2,.8,.3,1.4) forwards; }
+.gr-dot{ fill:rgb(var(--sb-f-e6eef5)); transform-box:fill-box; transform-origin:center; opacity:0; animation:gr-pop .55s 1.7s cubic-bezier(.2,.8,.3,1.4) forwards; }
 @keyframes gr-draw{ to{ stroke-dashoffset:0; } }
 @keyframes gr-pop{ 0%{ opacity:0; transform:scale(.4); } 60%{ opacity:1; transform:scale(1.35); } 100%{ opacity:1; transform:scale(1); } }
 /* A redraw after a resize or a late name: no replay. */

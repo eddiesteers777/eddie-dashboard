@@ -463,7 +463,7 @@
     align-items:center;
     justify-content:center;
     gap:22px;
-    background:radial-gradient(circle at center,#3A5670 0%,#1C2834 55%,#0F161E 100%);
+    background:radial-gradient(circle at center,rgb(var(--sb-f-3a5670)) 0%,rgb(var(--sb-f-1c2834)) 55%,rgb(var(--sb-f-0f161e)) 100%);
     transition:opacity .5s ease;
 
 }
@@ -481,7 +481,7 @@
     width:220px;
     height:220px;
     border-radius:50%;
-    background:radial-gradient(circle,rgba(150,190,226,.5) 0%,rgba(150,190,226,.16) 45%,transparent 72%);
+    background:radial-gradient(circle,rgba(var(--sb-f-96bee2),.5) 0%,rgba(var(--sb-f-96bee2),.16) 45%,transparent 72%);
     filter:blur(4px);
     animation:eos-splash-pulse 1.6s ease-in-out infinite;
 

@@ -93,3 +93,50 @@ test("settings has the Look switch", () => {
     assert.match(html, /id="lookMode"/);
     assert.match(html, /src="js\/lookSetting\.js"/);
 });
+
+// Colourways (step 4, 2026-11-25): Fog, Forest, Pitch, Track, Dusk, Slate.
+test("colourway: Fog by default, a saved one applies, a bad one falls back to Fog", () => {
+    assert.equal(run().attrs["data-sb-scheme"], "fog");
+    assert.equal(run({ stored: JSON.stringify({ c: "track", m: "night" }) }).attrs["data-sb-scheme"], "track");
+    assert.equal(run({ stored: JSON.stringify({ c: "neon" }) }).attrs["data-sb-scheme"], "fog");
+});
+
+test("changing the colourway keeps the mode, and the other way round", () => {
+    const r = run({ stored: JSON.stringify({ c: "dusk", m: "night" }) });
+    r.look.set({ c: "pitch" });
+    assert.deepEqual([r.attrs["data-sb-scheme"], r.attrs["data-sb-mode"]], ["pitch", "night"]);
+    r.look.set({ m: "light" });
+    assert.deepEqual([r.attrs["data-sb-scheme"], r.attrs["data-sb-mode"]], ["pitch", "light"]);
+    assert.equal(JSON.stringify(r.look.schemes.map(s => s[0])), JSON.stringify(["fog", "forest", "pitch", "track", "dusk", "slate"]));
+});
+
+test("the colourway blocks in skin.css are up to date (npm run colorways)", async () => {
+    const { SCHEMES, readTokens, schemeTokens } = await import("../scripts/build-colorways.mjs");
+    const css = readFileSync(new URL("../css/skin.css", import.meta.url), "utf8");
+    const tokens = readTokens(css);
+    for (const [id, , main] of SCHEMES.slice(1)) {
+        const m = css.match(new RegExp(`html\\[data-sb-scheme="${id}"\\]\\{([^}]*)\\}`));
+        assert.ok(m, `block for ${id}`);
+        const have = Object.fromEntries([...m[1].matchAll(/(--sb-[\w-]+):([^;]+);/g)].map(x => [x[1], x[2]]));
+        assert.deepEqual(have, Object.fromEntries(schemeTokens(tokens, main)), id);
+    }
+    assert.ok(tokens.length > 60);
+    assert.ok(!/#[0-9a-fA-F]{6}\b/.test(css.slice(css.indexOf("/* Part 2:")).replace(/\/\*[\s\S]*?\*\//g, "").replace(/#(D2AD62|E6CB8E|A8883F|d19a7a)\b/gi, "")), "parts 2 and 3 use tokens, not hex blues");
+});
+
+test("text stays readable in every colourway", async () => {
+    const { SCHEMES, readTokens, schemeTokens, contrast } = await import("../scripts/build-colorways.mjs");
+    const css = readFileSync(new URL("../css/skin.css", import.meta.url), "utf8");
+    const tokens = readTokens(css), hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    for (const [id, , main] of SCHEMES) {
+        const t = new Map(tokens);
+        for (const [k, v] of schemeTokens(tokens, main)) t.set(k, v);
+        if (id === "fog") t.clear(), tokens.forEach(([k, v]) => t.set(k, v));
+        for (const [a, b] of [["--sb-ink", "--sb-ground"], ["--sb-ink-3", "--sb-ground"], ["--sb-ink-link", "--sb-ground"], ["--sb-on-card", "--sb-card-top"], ["--sb-on-card-3", "--sb-card-top"]])
+            assert.ok(contrast(hex(t.get(a)), hex(t.get(b))) >= 4.5, `${id}: ${a} on ${b}`);
+    }
+});
+
+test("the look is saved to the account", () => {
+    assert.match(readFileSync(new URL("../js/cloudSync.js", import.meta.url), "utf8"), /"southbound-look"/);
+});

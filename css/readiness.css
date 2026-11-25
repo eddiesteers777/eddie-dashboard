@@ -537,11 +537,11 @@
 .rd-body-top .rd-line{ margin-top:6px; font-size:14.5px; }
 
 /* B (2026-11-13): the inner card (tabs + one 4-week panel) and today's numbers in one row */
-.rd-lens{ margin-top:14px; border:1px solid var(--border); border-radius:16px; background:rgba(8,15,22,.32); overflow:hidden; }
+.rd-lens{ margin-top:14px; border:1px solid var(--border); border-radius:16px; background:rgba(var(--sb-f-080f16),.32); overflow:hidden; }
 .rd-tabs{ display:flex; gap:4px; padding:8px 8px 0; overflow-x:auto; scrollbar-width:none; }
 .rd-tabs::-webkit-scrollbar{ display:none; }
 .rd-tab{ appearance:none; flex:none; min-height:44px; padding:0 14px; border:0; border-radius:99px; background:none; color:var(--muted); font:600 13px var(--font-body); cursor:pointer; white-space:nowrap; }
-.rd-tab.on{ background:rgba(199,214,228,.16); color:var(--text); box-shadow:inset 0 0 0 1px rgba(214,228,240,.22); }
+.rd-tab.on{ background:rgba(var(--sb-accent-rgb),.16); color:var(--text); box-shadow:inset 0 0 0 1px rgba(var(--sb-mist-rgb),.22); }
 .rd-tab:focus-visible, .rd-cell:focus-visible{ outline:2px solid var(--primary); outline-offset:-2px; }
 .rd-panel{ padding:4px 14px 12px; touch-action:pan-y; }
 .rd-tr-head{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:6px; }
@@ -549,7 +549,7 @@
 .rd-big{ font:800 30px/1 var(--font-display); }
 .rd-big u{ font:500 12px var(--font-body); color:var(--muted); text-decoration:none; margin-left:5px; }
 .rd-big-quiet{ color:var(--muted); }
-.rd-ghostline{ display:block; width:100%; height:auto; color:rgba(199,214,228,.28); }
+.rd-ghostline{ display:block; width:100%; height:auto; color:rgba(var(--sb-accent-rgb),.28); }
 .rd-lens .sb-chart{ margin:0; }
 .rd-strip{ display:grid; grid-template-columns:repeat(var(--cols,4),minmax(0,1fr)); margin-top:12px; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
 .rd-cell{ appearance:none; background:none; border:0; border-radius:0; font:inherit; color:inherit; min-height:52px; padding:8px 4px; text-align:center; display:flex; flex-direction:column; justify-content:center; gap:2px; min-width:0; }
@@ -559,7 +559,7 @@ button.rd-cell{ cursor:pointer; }
 .rd-cell b{ font:800 19px/1.2 var(--font-display); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .rd-cell b.dim{ color:var(--muted); }
 button.rd-cell.on small{ color:var(--primary); }
-.rd-connectbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:14px -18px -14px; padding:12px 18px; border-top:1px solid var(--border); background:rgba(10,18,26,.16); }
+.rd-connectbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:14px -18px -14px; padding:12px 18px; border-top:1px solid var(--border); background:rgba(var(--sb-deep-rgb),.16); }
 .rd-connectbar p{ margin:0; font-size:13px; color:var(--muted); }
 .rd-connectbar p b{ color:var(--text); font-weight:650; }
 .rd-connectbar .sb-btn{ min-height:44px; padding:0 16px; }
@@ -583,8 +583,8 @@ button.rd-cell.on small{ color:var(--primary); }
 .rd-more2{ margin-top:6px; border-top:1px solid var(--border); padding-top:6px; }
 
 /* Connect sheet (opens on Today instead of sending people to Settings first) */
-.rd-sheet{ border:1px solid rgba(214,228,240,.22); border-radius:24px 24px 0 0; padding:14px 20px 26px; width:min(100%,480px); max-width:100%; margin:auto auto 0; background:linear-gradient(180deg,#2c4054,#1d2a36); color:var(--text); box-shadow:0 -12px 40px rgba(0,0,0,.5); }
-.rd-sheet::backdrop{ background:rgba(8,14,20,.6); }
+.rd-sheet{ border:1px solid rgba(var(--sb-mist-rgb),.22); border-radius:24px 24px 0 0; padding:14px 20px 26px; width:min(100%,480px); max-width:100%; margin:auto auto 0; background:linear-gradient(180deg,rgb(var(--sb-f-2c4054)),rgb(var(--sb-f-1d2a36))); color:var(--text); box-shadow:0 -12px 40px rgba(0,0,0,.5); }
+.rd-sheet::backdrop{ background:rgba(var(--sb-f-080e14),.6); }
 .rd-sheet .rd-grab{ width:38px; height:4px; border-radius:4px; background:var(--border); margin:0 auto 16px; }
 .rd-sheet h3{ margin:0 0 8px; font:800 26px/1 var(--font-display); text-transform:uppercase; }
 .rd-sheet p{ margin:0; font-size:14.5px; color:var(--text-secondary); }

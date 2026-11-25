@@ -34,29 +34,558 @@
   --sb-on-card-3:#9DB0C2;
   --sb-gold:#D2AD62;
   --sb-accent:#C7D6E4;
+  /* Every other fog colour in parts 2 and 3, named by its Fog value (r,g,b). Use as rgb(var(--sb-f-...)) or
+     rgba(var(--sb-f-...),alpha). The colourway blocks below redefine all of them. */
+  --sb-f-04080c:4,8,12;
+  --sb-f-060c12:6,12,18;
+  --sb-f-080e14:8,14,20;
+  --sb-f-10202c:16,32,44;
+  --sb-f-121c28:18,28,40;
+  --sb-f-13202b:19,32,43;
+  --sb-f-141d26:20,29,38;
+  --sb-f-16222e:22,34,46;
+  --sb-f-17212b:23,33,43;
+  --sb-f-182634:24,38,52;
+  --sb-f-1a2b3b:26,43,59;
+  --sb-f-1b2a38:27,42,56;
+  --sb-f-1c2834:28,40,52;
+  --sb-f-1d2a36:29,42,54;
+  --sb-f-1e2b37:30,43,55;
+  --sb-f-1e3246:30,50,70;
+  --sb-f-213242:33,50,66;
+  --sb-f-27394a:39,57,74;
+  --sb-f-283b4e:40,59,78;
+  --sb-f-2a3e52:42,62,82;
+  --sb-f-2c4964:44,73,100;
+  --sb-f-33475a:51,71,90;
+  --sb-f-3b5368:59,83,104;
+  --sb-f-3c5670:60,86,112;
+  --sb-f-405c76:64,92,118;
+  --sb-f-506c88:80,108,136;
+  --sb-f-58809f:88,128,159;
+  --sb-f-70a0d6:112,160,214;
+  --sb-f-8fa6bc:143,166,188;
+  --sb-f-96b2cc:150,178,204;
+  --sb-f-96bee2:150,190,226;
+  --sb-f-9cc0e4:156,192,228;
+  --sb-f-9fc0dc:159,192,220;
+  --sb-f-b6cadb:182,202,219;
+  --sb-f-bed4e8:190,212,232;
+  --sb-f-bfd3e8:191,211,232;
+  --sb-f-c8d8e6:200,216,230;
+  --sb-f-cfe0f0:207,224,240;
+  --sb-f-d6e3ee:214,227,238;
+  --sb-f-dce8f2:220,232,242;
+  --sb-f-e0e9f1:224,233,241;
+  --sb-f-e2eef8:226,238,248;
+  --sb-f-e4eef6:228,238,246;
+  --sb-f-ebf4fc:235,244,252;
+  --sb-f-f0f8ff:240,248,255;
+  --sb-f-f1f6fb:241,246,251;
+  /* Fog blues used by page stylesheets (css/fueling.css, css/strength.css...). */
+  --sb-f-080f16:8,15,22;
+  --sb-f-0e1b27:14,27,39;
+  --sb-f-0f161e:15,22,30;
+  --sb-f-16212b:22,33,43;
+  --sb-f-1e2c3a:30,44,58;
+  --sb-f-223446:34,52,70;
+  --sb-f-2c4054:44,64,84;
+  --sb-f-2c4358:44,67,88;
+  --sb-f-2f5b86:47,91,134;
+  --sb-f-3a5670:58,86,112;
+  --sb-f-3c5368:60,83,104;
+  --sb-f-3c566e:60,86,110;
+  --sb-f-3d6f9c:61,111,156;
+  --sb-f-4a84ba:74,132,186;
+  --sb-f-4f86b8:79,134,184;
+  --sb-f-5d92c4:93,146,196;
+  --sb-f-78aad8:120,170,216;
+  --sb-f-7c95ab:124,149,171;
+  --sb-f-8fb0c4:143,176,196;
+  --sb-f-a8c0d8:168,192,216;
+  --sb-f-dbe9f5:219,233,245;
+  --sb-f-e6eef5:230,238,245;
+  --sb-f-eef5fb:238,245,251;
 }
+
+/* Colourways (Eddie, 2026-11-25, step 4: "All six"): Fog (above, the default), Forest, Pitch, Track, Dusk and Slate.
+   Each block redefines the part 1 tokens with Fog turned to the colourway's hue; scripts/build-colorways.mjs writes
+   them, so change a Fog token above and run npm run colorways, never these blocks. js/appLookBoot.js sets
+   html[data-sb-scheme] from Settings > Look. Gold, clay, greys and the per-card colours on Today stay the same. */
+/* colourways:start (npm run colorways writes this; don't edit by hand) */
+html[data-sb-scheme="forest"]{
+  --sb-mist-rgb:214,240,226;
+  --sb-glass-top-rgb:42,82,63;
+  --sb-glass-rgb:24,48,36;
+  --sb-deep-rgb:10,26,18;
+  --sb-accent-rgb:199,228,214;
+  --sb-ground:#CBE3D6;
+  --sb-ground-top:#DCECE3;
+  --sb-ground-low:#C3DECF;
+  --sb-card-top:#224A37;
+  --sb-card-bottom:#1A3B2B;
+  --sb-card-base:#1D3F2F;
+  --sb-ink:#132B1E;
+  --sb-ink-2:#3C614F;
+  --sb-ink-3:#446856;
+  --sb-ink-link:#2C6E4A;
+  --sb-on-card:#EEF7F2;
+  --sb-on-card-2:#B9D8C9;
+  --sb-on-card-3:#9DC2B0;
+  --sb-accent:#C7E4D6;
+  --sb-f-04080c:4,12,8;
+  --sb-f-060c12:6,18,12;
+  --sb-f-080e14:8,20,14;
+  --sb-f-10202c:16,44,28;
+  --sb-f-121c28:18,40,30;
+  --sb-f-13202b:19,43,30;
+  --sb-f-141d26:20,38,29;
+  --sb-f-16222e:22,46,34;
+  --sb-f-17212b:23,43,33;
+  --sb-f-182634:24,52,38;
+  --sb-f-1a2b3b:26,59,43;
+  --sb-f-1b2a38:27,56,42;
+  --sb-f-1c2834:28,52,40;
+  --sb-f-1d2a36:29,54,41;
+  --sb-f-1e2b37:30,55,42;
+  --sb-f-1e3246:30,70,51;
+  --sb-f-213242:33,66,50;
+  --sb-f-27394a:39,74,57;
+  --sb-f-283b4e:40,78,60;
+  --sb-f-2a3e52:42,82,63;
+  --sb-f-2c4964:44,100,72;
+  --sb-f-33475a:51,90,71;
+  --sb-f-3b5368:59,104,81;
+  --sb-f-3c5670:60,112,87;
+  --sb-f-405c76:64,118,91;
+  --sb-f-506c88:80,136,109;
+  --sb-f-58809f:88,159,120;
+  --sb-f-70a0d6:112,214,168;
+  --sb-f-8fa6bc:143,188,166;
+  --sb-f-96b2cc:150,204,177;
+  --sb-f-96bee2:150,226,187;
+  --sb-f-9cc0e4:156,228,193;
+  --sb-f-9fc0dc:159,220,188;
+  --sb-f-b6cadb:182,219,200;
+  --sb-f-bed4e8:190,232,211;
+  --sb-f-bfd3e8:191,232,213;
+  --sb-f-c8d8e6:200,230,215;
+  --sb-f-cfe0f0:207,240,224;
+  --sb-f-d6e3ee:214,238,225;
+  --sb-f-dce8f2:220,242,230;
+  --sb-f-e0e9f1:224,241,232;
+  --sb-f-e2eef8:226,248,236;
+  --sb-f-e4eef6:228,246,236;
+  --sb-f-ebf4fc:235,252,243;
+  --sb-f-f0f8ff:240,255,247;
+  --sb-f-f1f6fb:241,251,246;
+  --sb-f-080f16:8,22,15;
+  --sb-f-0e1b27:14,39,26;
+  --sb-f-0f161e:15,30,23;
+  --sb-f-16212b:22,43,32;
+  --sb-f-1e2c3a:30,58,44;
+  --sb-f-223446:34,70,53;
+  --sb-f-2c4054:44,84,65;
+  --sb-f-2c4358:44,88,66;
+  --sb-f-2f5b86:47,134,92;
+  --sb-f-3a5670:58,112,85;
+  --sb-f-3c5368:60,104,82;
+  --sb-f-3c566e:60,110,85;
+  --sb-f-3d6f9c:61,156,108;
+  --sb-f-4a84ba:74,186,130;
+  --sb-f-4f86b8:79,184,131;
+  --sb-f-5d92c4:93,196,145;
+  --sb-f-78aad8:120,216,168;
+  --sb-f-7c95ab:124,171,147;
+  --sb-f-8fb0c4:143,196,164;
+  --sb-f-a8c0d8:168,216,193;
+  --sb-f-dbe9f5:219,245,231;
+  --sb-f-e6eef5:230,245,237;
+  --sb-f-eef5fb:238,251,244;
+}
+html[data-sb-scheme="pitch"]{
+  --sb-mist-rgb:211,243,225;
+  --sb-glass-top-rgb:25,99,60;
+  --sb-glass-rgb:14,58,35;
+  --sb-deep-rgb:3,33,17;
+  --sb-accent-rgb:195,232,212;
+  --sb-ground:#C8E6D5;
+  --sb-ground-top:#DAEEE2;
+  --sb-ground-low:#C0E1CE;
+  --sb-card-top:#115B34;
+  --sb-card-bottom:#0C4928;
+  --sb-card-base:#0E4E2D;
+  --sb-ink:#09351C;
+  --sb-ink-2:#2B6D4A;
+  --sb-ink-3:#306D4C;
+  --sb-ink-link:#0D6E36;
+  --sb-on-card:#EDF8F2;
+  --sb-on-card-2:#B5DCC7;
+  --sb-on-card-3:#9FCBB3;
+  --sb-accent:#C3E8D4;
+  --sb-f-04080c:1,15,8;
+  --sb-f-060c12:1,23,12;
+  --sb-f-080e14:3,25,14;
+  --sb-f-10202c:4,56,25;
+  --sb-f-121c28:8,50,30;
+  --sb-f-13202b:9,53,28;
+  --sb-f-141d26:12,46,28;
+  --sb-f-16222e:12,56,33;
+  --sb-f-17212b:14,52,32;
+  --sb-f-182634:12,64,37;
+  --sb-f-1a2b3b:12,73,40;
+  --sb-f-1b2a38:14,69,39;
+  --sb-f-1c2834:18,62,39;
+  --sb-f-1d2a36:18,65,40;
+  --sb-f-1e2b37:19,66,41;
+  --sb-f-1e3246:13,87,48;
+  --sb-f-213242:19,80,47;
+  --sb-f-27394a:24,89,54;
+  --sb-f-283b4e:24,94,57;
+  --sb-f-2a3e52:25,99,60;
+  --sb-f-2c4964:20,124,68;
+  --sb-f-33475a:34,107,68;
+  --sb-f-3b5368:40,123,77;
+  --sb-f-3c5670:37,135,84;
+  --sb-f-405c76:41,141,87;
+  --sb-f-506c88:56,160,106;
+  --sb-f-58809f:57,190,112;
+  --sb-f-70a0d6:99,227,164;
+  --sb-f-8fa6bc:137,194,164;
+  --sb-f-96b2cc:143,211,174;
+  --sb-f-96bee2:141,235,183;
+  --sb-f-9cc0e4:147,237,190;
+  --sb-f-9fc0dc:151,228,185;
+  --sb-f-b6cadb:177,224,198;
+  --sb-f-bed4e8:185,237,209;
+  --sb-f-bfd3e8:186,237,211;
+  --sb-f-c8d8e6:196,234,213;
+  --sb-f-cfe0f0:203,244,222;
+  --sb-f-d6e3ee:211,241,224;
+  --sb-f-dce8f2:217,245,229;
+  --sb-f-e0e9f1:222,243,231;
+  --sb-f-e2eef8:223,251,235;
+  --sb-f-e4eef6:226,248,235;
+  --sb-f-ebf4fc:233,254,242;
+  --sb-f-f0f8ff:240,255,247;
+  --sb-f-f1f6fb:240,252,246;
+  --sb-f-080f16:2,28,14;
+  --sb-f-0e1b27:3,50,25;
+  --sb-f-0f161e:9,36,23;
+  --sb-f-16212b:13,52,31;
+  --sb-f-1e2c3a:18,70,43;
+  --sb-f-223446:18,86,51;
+  --sb-f-2c4054:27,101,62;
+  --sb-f-2c4358:25,107,62;
+  --sb-f-2f5b86:9,172,86;
+  --sb-f-3a5670:35,135,81;
+  --sb-f-3c5368:41,123,78;
+  --sb-f-3c566e:38,132,81;
+  --sb-f-3d6f9c:20,197,100;
+  --sb-f-4a84ba:25,235,122;
+  --sb-f-4f86b8:34,229,123;
+  --sb-f-5d92c4:48,241,138;
+  --sb-f-78aad8:108,228,163;
+  --sb-f-7c95ab:104,191,143;
+  --sb-f-8fb0c4:136,203,160;
+  --sb-f-a8c0d8:162,222,191;
+  --sb-f-dbe9f5:216,248,230;
+  --sb-f-e6eef5:228,247,236;
+  --sb-f-eef5fb:236,253,244;
+}
+html[data-sb-scheme="track"]{
+  --sb-mist-rgb:243,216,211;
+  --sb-glass-top-rgb:93,43,31;
+  --sb-glass-rgb:54,25,18;
+  --sb-deep-rgb:30,10,6;
+  --sb-accent-rgb:232,202,195;
+  --sb-ground:#E6CCC8;
+  --sb-ground-top:#EEDDDA;
+  --sb-ground-low:#E1C4C0;
+  --sb-card-top:#552317;
+  --sb-card-bottom:#441A11;
+  --sb-card-base:#481E14;
+  --sb-ink:#31120D;
+  --sb-ink-2:#6B3C32;
+  --sb-ink-3:#7B4A40;
+  --sb-ink-link:#882B1C;
+  --sb-on-card:#F8EEED;
+  --sb-on-card-2:#DCBCB5;
+  --sb-on-card-3:#C7A198;
+  --sb-accent:#E8CAC3;
+  --sb-f-04080c:14,4,2;
+  --sb-f-060c12:21,6,3;
+  --sb-f-080e14:23,8,5;
+  --sb-f-10202c:51,14,9;
+  --sb-f-121c28:46,20,12;
+  --sb-f-13202b:49,18,13;
+  --sb-f-141d26:43,20,15;
+  --sb-f-16222e:52,23,16;
+  --sb-f-17212b:48,24,18;
+  --sb-f-182634:59,25,17;
+  --sb-f-1a2b3b:68,26,17;
+  --sb-f-1b2a38:64,27,19;
+  --sb-f-1c2834:58,29,22;
+  --sb-f-1d2a36:61,29,22;
+  --sb-f-1e2b37:62,30,23;
+  --sb-f-1e3246:81,31,19;
+  --sb-f-213242:75,33,24;
+  --sb-f-27394a:83,39,30;
+  --sb-f-283b4e:88,41,30;
+  --sb-f-2a3e52:93,43,31;
+  --sb-f-2c4964:115,44,29;
+  --sb-f-33475a:100,51,41;
+  --sb-f-3b5368:116,58,47;
+  --sb-f-3c5670:126,61,46;
+  --sb-f-405c76:132,64,50;
+  --sb-f-506c88:151,81,65;
+  --sb-f-58809f:178,83,69;
+  --sb-f-70a0d6:227,127,99;
+  --sb-f-8fa6bc:194,148,137;
+  --sb-f-96b2cc:211,155,143;
+  --sb-f-96bee2:235,156,141;
+  --sb-f-9cc0e4:237,164,147;
+  --sb-f-9fc0dc:228,163,151;
+  --sb-f-b6cadb:224,184,177;
+  --sb-f-bed4e8:237,194,185;
+  --sb-f-bfd3e8:237,196,186;
+  --sb-f-c8d8e6:234,202,196;
+  --sb-f-cfe0f0:244,210,203;
+  --sb-f-d6e3ee:241,215,211;
+  --sb-f-dce8f2:245,221,217;
+  --sb-f-e0e9f1:243,225,222;
+  --sb-f-e2eef8:251,227,223;
+  --sb-f-e4eef6:248,229,226;
+  --sb-f-ebf4fc:254,236,233;
+  --sb-f-f0f8ff:255,242,240;
+  --sb-f-f1f6fb:252,242,240;
+  --sb-f-080f16:26,8,4;
+  --sb-f-0e1b27:46,14,7;
+  --sb-f-0f161e:34,16,11;
+  --sb-f-16212b:49,22,16;
+  --sb-f-1e2c3a:65,31,23;
+  --sb-f-223446:80,35,24;
+  --sb-f-2c4054:95,45,33;
+  --sb-f-2c4358:100,44,32;
+  --sb-f-2f5b86:157,48,24;
+  --sb-f-3a5670:126,58,44;
+  --sb-f-3c5368:116,60,48;
+  --sb-f-3c566e:123,60,47;
+  --sb-f-3d6f9c:181,60,36;
+  --sb-f-4a84ba:216,74,44;
+  --sb-f-4f86b8:212,78,51;
+  --sb-f-5d92c4:224,93,65;
+  --sb-f-78aad8:228,128,108;
+  --sb-f-7c95ab:184,123,111;
+  --sb-f-8fb0c4:203,141,136;
+  --sb-f-a8c0d8:222,173,162;
+  --sb-f-dbe9f5:248,221,216;
+  --sb-f-e6eef5:247,231,228;
+  --sb-f-eef5fb:253,239,236;
+}
+html[data-sb-scheme="dusk"]{
+  --sb-mist-rgb:212,214,242;
+  --sb-glass-top-rgb:38,40,86;
+  --sb-glass-rgb:22,23,50;
+  --sb-deep-rgb:9,9,27;
+  --sb-accent-rgb:196,198,231;
+  --sb-ground:#C9CBE5;
+  --sb-ground-top:#DBDCED;
+  --sb-ground-low:#C1C3E0;
+  --sb-card-top:#1E204E;
+  --sb-card-bottom:#17193E;
+  --sb-card-base:#1A1B42;
+  --sb-ink:#11132D;
+  --sb-ink-2:#393B64;
+  --sb-ink-3:#474974;
+  --sb-ink-link:#29307B;
+  --sb-on-card:#EDEEF8;
+  --sb-on-card-2:#B6B8DB;
+  --sb-on-card-3:#9A9CC5;
+  --sb-accent:#C4C6E7;
+  --sb-f-04080c:3,4,13;
+  --sb-f-060c12:5,5,19;
+  --sb-f-080e14:7,7,21;
+  --sb-f-10202c:14,17,46;
+  --sb-f-121c28:16,16,42;
+  --sb-f-13202b:17,19,45;
+  --sb-f-141d26:18,19,40;
+  --sb-f-16222e:20,21,48;
+  --sb-f-17212b:21,22,45;
+  --sb-f-182634:22,23,54;
+  --sb-f-1a2b3b:23,25,62;
+  --sb-f-1b2a38:24,26,59;
+  --sb-f-1c2834:26,27,54;
+  --sb-f-1d2a36:27,28,56;
+  --sb-f-1e2b37:28,29,57;
+  --sb-f-1e3246:26,28,74;
+  --sb-f-213242:30,32,69;
+  --sb-f-27394a:36,38,77;
+  --sb-f-283b4e:37,38,81;
+  --sb-f-2a3e52:38,40,86;
+  --sb-f-2c4964:39,42,105;
+  --sb-f-33475a:48,50,93;
+  --sb-f-3b5368:55,59,108;
+  --sb-f-3c5670:55,57,117;
+  --sb-f-405c76:59,63,123;
+  --sb-f-506c88:75,77,141;
+  --sb-f-58809f:82,90,165;
+  --sb-f-70a0d6:103,104,223;
+  --sb-f-8fa6bc:139,141,192;
+  --sb-f-96b2cc:145,149,209;
+  --sb-f-96bee2:143,149,233;
+  --sb-f-9cc0e4:150,153,234;
+  --sb-f-9fc0dc:154,159,225;
+  --sb-f-b6cadb:179,182,222;
+  --sb-f-bed4e8:186,189,236;
+  --sb-f-bfd3e8:187,188,236;
+  --sb-f-c8d8e6:197,200,233;
+  --sb-f-cfe0f0:204,206,243;
+  --sb-f-d6e3ee:212,214,240;
+  --sb-f-dce8f2:218,220,244;
+  --sb-f-e0e9f1:222,224,243;
+  --sb-f-e2eef8:224,226,250;
+  --sb-f-e4eef6:226,228,248;
+  --sb-f-ebf4fc:233,235,254;
+  --sb-f-f0f8ff:240,241,255;
+  --sb-f-f1f6fb:240,241,252;
+  --sb-f-080f16:7,7,23;
+  --sb-f-0e1b27:12,13,41;
+  --sb-f-0f161e:14,14,31;
+  --sb-f-16212b:20,22,45;
+  --sb-f-1e2c3a:28,29,60;
+  --sb-f-223446:31,32,73;
+  --sb-f-2c4054:40,42,88;
+  --sb-f-2c4358:40,43,92;
+  --sb-f-2f5b86:39,43,142;
+  --sb-f-3a5670:53,57,117;
+  --sb-f-3c5368:56,59,108;
+  --sb-f-3c566e:56,59,114;
+  --sb-f-3d6f9c:53,59,164;
+  --sb-f-4a84ba:64,71,196;
+  --sb-f-4f86b8:70,77,193;
+  --sb-f-5d92c4:84,90,205;
+  --sb-f-78aad8:112,118,224;
+  --sb-f-7c95ab:120,123,175;
+  --sb-f-8fb0c4:138,148,201;
+  --sb-f-a8c0d8:164,166,220;
+  --sb-f-dbe9f5:217,219,247;
+  --sb-f-e6eef5:229,230,246;
+  --sb-f-eef5fb:237,238,252;
+}
+html[data-sb-scheme="slate"]{
+  --sb-mist-rgb:221,227,233;
+  --sb-glass-top-rgb:52,61,72;
+  --sb-glass-rgb:30,35,42;
+  --sb-deep-rgb:14,17,22;
+  --sb-accent-rgb:207,213,220;
+  --sb-ground:#D1D7DD;
+  --sb-ground-top:#E0E4E8;
+  --sb-ground-low:#CAD0D7;
+  --sb-card-top:#2C3540;
+  --sb-card-bottom:#232A32;
+  --sb-card-base:#262D36;
+  --sb-ink:#191F25;
+  --sb-ink-2:#464D57;
+  --sb-ink-3:#545C67;
+  --sb-ink-link:#415163;
+  --sb-on-card:#F0F2F5;
+  --sb-on-card-2:#C1C8D0;
+  --sb-on-card-3:#A7AEB8;
+  --sb-accent:#CFD5DC;
+  --sb-f-04080c:6,8,10;
+  --sb-f-060c12:9,12,15;
+  --sb-f-080e14:11,14,17;
+  --sb-f-10202c:23,30,37;
+  --sb-f-121c28:24,28,34;
+  --sb-f-13202b:25,31,37;
+  --sb-f-141d26:25,28,33;
+  --sb-f-16222e:28,33,40;
+  --sb-f-17212b:28,32,38;
+  --sb-f-182634:31,37,45;
+  --sb-f-1a2b3b:35,42,50;
+  --sb-f-1b2a38:35,41,48;
+  --sb-f-1c2834:34,39,46;
+  --sb-f-1d2a36:36,41,47;
+  --sb-f-1e2b37:37,42,48;
+  --sb-f-1e3246:40,49,60;
+  --sb-f-213242:42,49,57;
+  --sb-f-27394a:48,55,65;
+  --sb-f-283b4e:50,58,68;
+  --sb-f-2a3e52:52,61,72;
+  --sb-f-2c4964:59,70,85;
+  --sb-f-33475a:61,69,80;
+  --sb-f-3b5368:71,81,92;
+  --sb-f-3c5670:74,84,98;
+  --sb-f-405c76:78,89,104;
+  --sb-f-506c88:95,106,121;
+  --sb-f-58809f:107,123,140;
+  --sb-f-70a0d6:139,158,187;
+  --sb-f-8fa6bc:155,164,176;
+  --sb-f-96b2cc:164,175,190;
+  --sb-f-96bee2:170,186,206;
+  --sb-f-9cc0e4:175,189,209;
+  --sb-f-9fc0dc:175,188,204;
+  --sb-f-b6cadb:192,200,209;
+  --sb-f-bed4e8:201,210,221;
+  --sb-f-bfd3e8:202,210,221;
+  --sb-f-c8d8e6:208,214,222;
+  --sb-f-cfe0f0:216,223,231;
+  --sb-f-d6e3ee:220,226,232;
+  --sb-f-dce8f2:226,231,236;
+  --sb-f-e0e9f1:228,232,237;
+  --sb-f-e2eef8:232,237,242;
+  --sb-f-e4eef6:233,237,241;
+  --sb-f-ebf4fc:239,243,248;
+  --sb-f-f0f8ff:244,247,251;
+  --sb-f-f1f6fb:244,246,248;
+  --sb-f-080f16:12,14,18;
+  --sb-f-0e1b27:21,26,32;
+  --sb-f-0f161e:19,22,26;
+  --sb-f-16212b:28,32,37;
+  --sb-f-1e2c3a:37,43,51;
+  --sb-f-223446:43,51,61;
+  --sb-f-2c4054:54,63,74;
+  --sb-f-2c4358:56,65,76;
+  --sb-f-2f5b86:70,88,111;
+  --sb-f-3a5670:72,83,98;
+  --sb-f-3c5368:72,81,92;
+  --sb-f-3c566e:73,84,97;
+  --sb-f-3d6f9c:86,106,131;
+  --sb-f-4a84ba:103,127,157;
+  --sb-f-4f86b8:107,129,156;
+  --sb-f-5d92c4:120,141,169;
+  --sb-f-78aad8:145,165,191;
+  --sb-f-7c95ab:136,146,159;
+  --sb-f-8fb0c4:157,171,182;
+  --sb-f-a8c0d8:181,190,203;
+  --sb-f-dbe9f5:226,232,238;
+  --sb-f-e6eef5:234,237,241;
+  --sb-f-eef5fb:241,244,248;
+}
+/* colourways:end */
 
 /* Part 2: the fog-blue glass look */
 /* Fog-blue ground, blue glass (Eddie, 2026-10-29, replacing the forest glass of 2026-10-28). Gold is an accent for a
    short list of features (see "GOLD" below); everything else uses mist. Layout, sizes and flows are untouched. */
 html.al-on{
   /* mist replaces the old tan as the general accent; gold is kept for the features listed under GOLD */
-  --primary:var(--sb-accent);--primary-light:#E0E9F1;--primary-dark:#8FA6BC;--on-primary:var(--sb-ink);
+  --primary:var(--sb-accent);--primary-light:rgb(var(--sb-f-e0e9f1));--primary-dark:rgb(var(--sb-f-8fa6bc));--on-primary:var(--sb-ink);
   --gold:var(--sb-gold);--gold-light:#E6CB8E;--gold-dark:#A8883F;
-  --bg:#17212B;--surface:#1D2A36;--surface-light:#27394A;--forest:#213242;
+  --bg:rgb(var(--sb-f-17212b));--surface:rgb(var(--sb-f-1d2a36));--surface-light:rgb(var(--sb-f-27394a));--forest:rgb(var(--sb-f-213242));
   --border:rgba(var(--sb-mist-rgb),.1);
-  background:#1c2834!important}
+  background:rgb(var(--sb-f-1c2834))!important}
 html.al-on body{background:transparent!important}
-.al-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,#1e2b37 0%,#33475a 46%,#1d2a36 100%)}
+.al-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgb(var(--sb-f-1e2b37)) 0%,rgb(var(--sb-f-33475a)) 46%,rgb(var(--sb-f-1d2a36)) 100%)}
 /* Still background (2026-11-01). Sized to the tallest the screen gets (100lvh), so it doesn't stretch when a phone
    browser's toolbar slides away on scroll, and painted once on its own layer so scrolling only moves the page. */
 body>.al-bg{inset:0 0 auto 0;height:100vh;height:100lvh;transform:translateZ(0);contain:strict}
 .al-bg::before{content:"";position:absolute;inset:0;background:
-  radial-gradient(60% 38% at 72% 12%,rgba(200,216,230,.4),transparent),
+  radial-gradient(60% 38% at 72% 12%,rgba(var(--sb-f-c8d8e6),.4),transparent),
   radial-gradient(46% 30% at 14% 92%,rgba(220,200,150,.16),transparent),
-  radial-gradient(70% 46% at 8% 96%,rgba(60,86,112,.8),transparent),
-  radial-gradient(50% 36% at 96% 70%,rgba(80,108,136,.4),transparent),
-  radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(4,8,12,.55) 100%)}
+  radial-gradient(70% 46% at 8% 96%,rgba(var(--sb-f-3c5670),.8),transparent),
+  radial-gradient(50% 36% at 96% 70%,rgba(var(--sb-f-506c88),.4),transparent),
+  radial-gradient(120% 90% at 50% 45%,transparent 55%,rgba(var(--sb-f-04080c),.55) 100%)}
 .al-bg::after{content:"";position:absolute;inset:0;opacity:.16;mix-blend-mode:overlay;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='.6'/></svg>")}
 /* Cards: blue glass with a mist hairline */
 html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none),html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card:not(.rd-none),html.al-on .card,html.al-on .ci-strip{
@@ -72,22 +601,22 @@ html.al-on .eos-bottomnav,html.al-on .eos-mobile-icon-btn,html.al-on .eos-navbar
 @media (hover:none) and (pointer:coarse){
   html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none),html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card:not(.rd-none),html.al-on .card,html.al-on .ci-strip{
     -webkit-backdrop-filter:none;backdrop-filter:none;
-    background:linear-gradient(180deg,rgba(40,59,78,.8),rgba(var(--sb-glass-rgb),.72))!important}
+    background:linear-gradient(180deg,rgba(var(--sb-f-283b4e),.8),rgba(var(--sb-glass-rgb),.72))!important}
 }
 @media (prefers-reduced-transparency:reduce){
   html.al-on .eos-today-card,html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card,html.al-on .card,html.al-on .eos-bottomnav{-webkit-backdrop-filter:none;backdrop-filter:none}
 }
 /* Bottom tab bar (Eddie, 2026-11-01, "B4"): clear fog glass with a lit top edge; the open tab is a wider white-blue
    glass lens and only its icon and label are gold (no solid gold fill). */
-html.al-on .eos-bottomnav{background:linear-gradient(180deg,rgba(150,178,204,.34),rgba(22,34,46,.72))!important;border:1px solid rgba(226,238,248,.26)!important;
+html.al-on .eos-bottomnav{background:linear-gradient(180deg,rgba(var(--sb-f-96b2cc),.34),rgba(var(--sb-f-16222e),.72))!important;border:1px solid rgba(var(--sb-f-e2eef8),.26)!important;
   -webkit-backdrop-filter:blur(30px) saturate(1.7) brightness(1.15);backdrop-filter:blur(30px) saturate(1.7) brightness(1.15);
-  box-shadow:inset 0 1px 0 rgba(240,248,255,.45),0 18px 40px -14px rgba(0,0,0,.7)!important}
-html.al-on .eos-bottomnav::before{background:linear-gradient(180deg,rgba(235,244,252,.22),transparent 70%)!important}
+  box-shadow:inset 0 1px 0 rgba(var(--sb-f-f0f8ff),.45),0 18px 40px -14px rgba(0,0,0,.7)!important}
+html.al-on .eos-bottomnav::before{background:linear-gradient(180deg,rgba(var(--sb-f-ebf4fc),.22),transparent 70%)!important}
 html.al-on .eos-bottomnav-item{color:rgba(var(--sb-mist-rgb),.7)!important}
-html.al-on .eos-bottomnav-item.active{color:#E4EEF6!important;flex-grow:1.35!important;
-  background:linear-gradient(180deg,rgba(235,244,252,.3),rgba(190,212,232,.1))!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(226,238,248,.34),0 0 20px rgba(150,190,226,.28)!important}
-html.al-on .eos-bottomnav-item.active .ui-icon{color:#E4EEF6!important}
+html.al-on .eos-bottomnav-item.active{color:rgb(var(--sb-f-e4eef6))!important;flex-grow:1.35!important;
+  background:linear-gradient(180deg,rgba(var(--sb-f-ebf4fc),.3),rgba(var(--sb-f-bed4e8),.1))!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 0 0 1px rgba(var(--sb-f-e2eef8),.34),0 0 20px rgba(var(--sb-f-96bee2),.28)!important}
+html.al-on .eos-bottomnav-item.active .ui-icon{color:rgb(var(--sb-f-e4eef6))!important}
 html.al-on .eos-nav-item.active,html.al-on .eos-dropdown-link.active{box-shadow:inset 3px 0 0 var(--primary)}
 html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none):first-of-type{border-top-color:rgba(var(--sb-gold-rgb),.7)!important}
 html.al-on .eos-coach-card h2,html.al-on .eos-coach-card .eos-today-card-header h2{color:var(--gold-light)}
@@ -97,9 +626,9 @@ html.al-on .race-strip :is(strong,b,.race-days){color:var(--gold-light)}
 @keyframes al-up{from{opacity:0;translate:0 14px}to{opacity:1;translate:0 0}}
 html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:al-up .6s cubic-bezier(.2,.7,.2,1) both}
 /* Launch splash: the old-film opening (same 2.5 s, same once-per-session rule), now in fog blue */
-.eos-splash{background:#141d26!important}
+.eos-splash{background:rgb(var(--sb-f-141d26))!important}
 .eos-splash::before{display:none!important;content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 50%,transparent 40%,rgba(0,0,0,.7)),url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='220' height='220' filter='url(%23n)' opacity='.5'/></svg>");opacity:.5;animation:al-flicker .18s steps(2) infinite}
-.eos-splash-glow{background:radial-gradient(closest-side,rgba(200,216,230,.4),rgba(60,86,112,.5) 60%,transparent)!important}
+.eos-splash-glow{background:radial-gradient(closest-side,rgba(var(--sb-f-c8d8e6),.4),rgba(var(--sb-f-3c5670),.5) 60%,transparent)!important}
 .eos-splash-wordmark::after{content:"";display:block;height:2px;margin:10px auto 0;background:var(--sb-gold);width:60%;transform-origin:left;animation:al-line 1.6s .3s cubic-bezier(.2,.7,.2,1) both}
 @keyframes al-flicker{50%{opacity:.4}}
 @keyframes al-line{from{transform:scaleX(0)}to{transform:scaleX(1)}}
@@ -112,7 +641,7 @@ html.al-on .eos-today-card,html.al-on .clients-card,html.al-on .card{animation:a
 @media (hover:none) and (pointer:coarse){
   html.al-on .eos-today-card:not(.eos-coach-card):not(.eos-client-package):not(.tr-panel):not(.tr-recent):not(.rd-none),html.al-on .eos-nutrition-snap,html.al-on .clients-card,html.al-on .rd-card:not(.rd-none),html.al-on .card{
     -webkit-backdrop-filter:none;backdrop-filter:none;
-    background:linear-gradient(180deg,rgba(40,59,78,.86),rgba(var(--sb-glass-rgb),.8))!important;
+    background:linear-gradient(180deg,rgba(var(--sb-f-283b4e),.86),rgba(var(--sb-glass-rgb),.8))!important;
     box-shadow:inset 0 1px 0 rgba(var(--sb-mist-rgb),.16),0 6px 14px rgba(0,0,0,.28)!important}
   .al-bg::after{display:none}
 }
@@ -123,14 +652,14 @@ html.al-on .eos-today-card-header h2{font:400 26px/1 var(--font-display);letter-
 html.al-on .eos-today-card-header h2::before{content:"";flex:0 0 4px;height:22px;border-radius:2px;background:var(--gold)}
 html.al-on .more-page .more-list{gap:26px}
 html.al-on .more-page .more-group{border-top:0;padding:0;margin:0;gap:2px;--rail:var(--gold)}
-html.al-on .more-page .more-group:nth-child(4n+2){--rail:#9fc0dc}
+html.al-on .more-page .more-group:nth-child(4n+2){--rail:rgb(var(--sb-f-9fc0dc))}
 html.al-on .more-page .more-group:nth-child(4n+3){--rail:var(--sage)}
 html.al-on .more-page .more-group:nth-child(4n+4){--rail:#d19a7a}
 html.al-on .more-page .more-group-title{font:400 28px/1 var(--font-display);letter-spacing:.03em;text-transform:uppercase;color:var(--text);margin:0 0 10px;display:flex;align-items:center;gap:10px}
 html.al-on .more-page .more-group-title::before{content:"";flex:0 0 4px;height:24px;border-radius:2px;background:var(--rail)}
 html.al-on .more-page .more-row{background:rgba(var(--sb-deep-rgb),.5);border:0;border-left:3px solid var(--rail);border-radius:6px;padding:12px 14px;min-height:60px}
 html.al-on .more-page .more-row:last-child{border-bottom:0}
-html.al-on .more-page .more-row:hover,html.al-on .more-page .more-row:focus-visible{background:rgba(24,38,52,.7)}
+html.al-on .more-page .more-row:hover,html.al-on .more-page .more-row:focus-visible{background:rgba(var(--sb-f-182634),.7)}
 html.al-on .more-page .more-row-icon{background:rgba(var(--sb-mist-rgb),.08);border:0}
 html.al-on .more-page .eos-more-account{background:rgba(var(--sb-deep-rgb),.5);border:0;border-left:3px solid var(--gold);border-radius:6px;padding:16px;margin-bottom:26px}
 /* Coach dashboard (B): the focus card and the Tools drop-down wear the same glass as the cards above.
@@ -167,7 +696,7 @@ html.al-on .hw-ring-fg{stroke:var(--gold)}
 html.al-on .hw-tick.done{background:var(--primary);color:var(--on-primary)}
 html.al-on .hw-pill.sage{background:rgba(var(--sb-accent-rgb),.14);color:var(--primary)}
 html.al-on .hw-row{border-top-color:rgba(var(--sb-mist-rgb),.14)}
-html.al-on .hw-thumb{background:linear-gradient(135deg,#3b5368,var(--sb-card-top) 60%,#1b2a38)}
+html.al-on .hw-thumb{background:linear-gradient(135deg,rgb(var(--sb-f-3b5368)),var(--sb-card-top) 60%,rgb(var(--sb-f-1b2a38)))}
 html.al-on .hw-thumb.hw-nov{color:var(--primary)}
 /* Round 2, option A (Eddie, 2026-11-10; he first picked B by mistake): Train, Running and More. Every section is one glass card, one heading style,
    one corner size (18), mist for the selected tab. Mock-ups: app-round2/. */
@@ -210,14 +739,14 @@ html.al-on .ct-library-empty.visible{background:linear-gradient(180deg,rgba(var(
 html.al-on .ct-panel-title{font:400 22px/1 var(--font-display)!important;letter-spacing:.03em!important;text-transform:uppercase!important;display:flex;align-items:center;gap:10px}
 html.al-on .ct-panel-title::before{content:"";flex:0 0 4px;height:18px;border-radius:2px;background:var(--gold)}
 @media (max-width:600px){
-  html.al-on #msgThread.is-full{background:radial-gradient(120% 50% at 50% 0%,#2a3e52,var(--bg) 60%)!important}
-  html.al-on #msgThread.is-full .msg-head,html.al-on #msgThread.is-full .msg-compose{background:rgba(23,33,43,.82)!important;border-color:rgba(var(--sb-mist-rgb),.12)!important}
+  html.al-on #msgThread.is-full{background:radial-gradient(120% 50% at 50% 0%,rgb(var(--sb-f-2a3e52)),var(--bg) 60%)!important}
+  html.al-on #msgThread.is-full .msg-head,html.al-on #msgThread.is-full .msg-compose{background:rgba(var(--sb-f-17212b),.82)!important;border-color:rgba(var(--sb-mist-rgb),.12)!important}
 }
-html.al-on .msg-press-menu,html.al-on .msg-press-react{background:rgba(29,42,54,.97)!important}
-html.al-on .msg-press{background:rgba(8,14,20,.55)!important}
+html.al-on .msg-press-menu,html.al-on .msg-press-react{background:rgba(var(--sb-f-1d2a36),.97)!important}
+html.al-on .msg-press{background:rgba(var(--sb-f-080e14),.55)!important}
 html.al-on .msg-input{background:rgba(var(--sb-deep-rgb),.55)!important}
-html.al-on .msg-row.is-mine .msg-bubble{background:linear-gradient(180deg,#D6E3EE,#B6CADB)!important;color:var(--on-primary)!important}
-html.al-on .msg-row.is-mine .msg-bubble::after{background:#B6CADB!important}
+html.al-on .msg-row.is-mine .msg-bubble{background:linear-gradient(180deg,rgb(var(--sb-f-d6e3ee)),rgb(var(--sb-f-b6cadb)))!important;color:var(--on-primary)!important}
+html.al-on .msg-row.is-mine .msg-bubble::after{background:rgb(var(--sb-f-b6cadb))!important}
 html.al-on .ct-hero.sb-hero-corner{--sb-corner-top:0px;--sb-corner-right:0px;min-height:0}
 html.al-on .ct-hero,html.al-on .ct-hero.sb-hero-corner{overflow:visible!important;border-radius:0!important}
 /* Round 4 (Eddie, 2026-11-10): Nutrition, Settings and Check-in in the same glass look. */
@@ -240,7 +769,7 @@ html.al-on button.bar::after{content:"";position:absolute;inset:-8px -2px}
 html.al-on .running-pill{min-width:44px!important}
 /* Round 8 (Eddie, 2026-11-10, option A): the Strength builder and the Cross-training window are blue glass, with 44px fields and buttons.
    The Cross-training window sits above the tab bar; on a phone it is a bottom sheet. */
-html.al-on .ct-modal-overlay,html.al-on .strength-editor-overlay{background:rgba(6,12,18,.66)!important}
+html.al-on .ct-modal-overlay,html.al-on .strength-editor-overlay{background:rgba(var(--sb-f-060c12),.66)!important}
 html.al-on .ct-modal-overlay{z-index:4600!important}
 html.al-on .ct-modal,html.al-on .strength-editor-modal{background:linear-gradient(180deg,rgba(var(--sb-glass-top-rgb),.97),rgba(var(--sb-glass-rgb),.97))!important;border:1px solid rgba(var(--sb-mist-rgb),.2)!important;border-radius:18px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 24px 60px rgba(0,0,0,.5)!important}
 html.al-on .ct-modal-header,html.al-on .strength-editor-header{border-bottom:1px solid rgba(var(--sb-mist-rgb),.14)!important;background:none!important}
@@ -267,7 +796,7 @@ html.al-on .ct-block-remove{min-width:44px;min-height:44px}
 html.al-on .hub-back,html.al-on .clients-card-note a{position:relative}
 html.al-on .hub-back::after,html.al-on .clients-card-note a::after{content:"";position:absolute;inset:-14px -8px}
 /* Round 10 (2026-11-10): the Running "Add a workout" sheet wears the same blue glass as the Round 8 windows. */
-html.al-on .running-modal-overlay{background:rgba(6,12,18,.66)!important}
+html.al-on .running-modal-overlay{background:rgba(var(--sb-f-060c12),.66)!important}
 html.al-on .running-modal{background:linear-gradient(180deg,rgba(var(--sb-glass-top-rgb),.97),rgba(var(--sb-glass-rgb),.97))!important;border:1px solid rgba(var(--sb-mist-rgb),.2)!important;border-radius:18px!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 24px 60px rgba(0,0,0,.5)!important}
 html.al-on .running-modal-header{border-bottom:1px solid rgba(var(--sb-mist-rgb),.14)!important;background:none!important}
 html.al-on .running-modal-header #runningRunModalTitle{font:400 24px/1 var(--font-display)!important;letter-spacing:.03em;text-transform:uppercase;color:var(--text)!important}
@@ -302,7 +831,7 @@ html.al-on .wr-reading{border-left:1px solid rgba(var(--sb-mist-rgb),.2)!importa
 html.al-on .wr-reading.is-fatigue,html.al-on .wr-reading.is-unusual{box-shadow:inset 0 2px 0 var(--amber),0 12px 30px rgba(0,0,0,.36)!important}
 html.al-on .wr-reading.is-unknown{box-shadow:inset 0 2px 0 var(--sage),0 12px 30px rgba(0,0,0,.36)!important}
 html.al-on .planner-grid{overflow:hidden}
-html.al-on{--sb-lens-bg:linear-gradient(180deg,#D6E3EE,#B6CADB)!important}
+html.al-on{--sb-lens-bg:linear-gradient(180deg,rgb(var(--sb-f-d6e3ee)),rgb(var(--sb-f-b6cadb)))!important}
 /* Coach round 3 (2026-11-10): the last small chart and table text on Marathon, Analytics and 75-Day reaches 12px. */
 html.al-on .mp-ring-center > span,html.al-on .mp-pill > span,html.al-on .mp-legend > span,
 html.al-on .record > span,html.al-on .hb-tile > span,html.al-on .hb-dow,html.al-on .analytics-page th,html.al-on .analytics-page th abbr,
@@ -329,7 +858,7 @@ html.al-on #coachCardSection .eos-coach-row:first-child{border-top:0}
 html.al-on #coachCardSection .eos-coach-row-icon{background:rgba(var(--t),.2)!important;color:rgb(var(--t))!important}
 html.al-on .th-row.is-on .th-name{text-decoration:none!important;opacity:.62}
 html.al-on .th-row{position:relative}
-html.al-on .th-row.is-on::after{content:"\2713";position:absolute;top:-4px;left:calc(50% + 10px);width:18px;height:18px;border-radius:50%;background:rgb(var(--t));color:#10202c;font:700 11px/18px var(--font-body);text-align:center}
+html.al-on .th-row.is-on::after{content:"\2713";position:absolute;top:-4px;left:calc(50% + 10px);width:18px;height:18px;border-radius:50%;background:rgb(var(--t));color:rgb(var(--sb-f-10202c));font:700 11px/18px var(--font-body);text-align:center}
 html.al-on .wk-feel{border:0!important;background:none!important;box-shadow:none!important;justify-content:center;border-top:1px solid rgba(var(--t),.2)!important;border-radius:0!important;margin-top:6px}
 html.al-on .eos-nutrition-snap-header span:first-child{font:600 12px/1 var(--font-mono);letter-spacing:.12em;text-transform:uppercase;color:rgb(var(--t))}
 html.al-on .eos-snap-link{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid rgba(var(--t),.55);border-radius:6px;color:var(--text)!important;font-weight:600;text-decoration:none}
@@ -366,12 +895,12 @@ html.al-on :is(#weekSection,#weekMilesCard,#todayHabits,#coachCardSection) .eos-
 html.al-on #weekSection .wk-miles{font-size:20px!important}
 html.al-on #todayCard .hr-big.is-long{font-size:clamp(30px,6vw,40px)}
 /* Morning check-in form: premium glass sheet. Mist blue leads; each section's own colour is only a faint accent (Eddie 2026-11-11, B with blue primary) */
-html.al-on .rd-dialog{background:linear-gradient(180deg,rgba(var(--sb-glass-top-rgb),.97),rgba(18,28,40,.98))!important;border:1px solid rgba(var(--sb-mist-rgb),.24)!important;box-shadow:0 30px 70px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.09)!important;border-radius:24px}
-html.al-on .rd-form-head{background:radial-gradient(130% 150% at 0% 0%,rgba(112,160,214,.4),rgba(112,160,214,.1) 55%,transparent 80%);border-bottom:1px solid rgba(var(--sb-mist-rgb),.14)}
-html.al-on .rd-form-head .sb-eyebrow{color:#BFD3E8;font:600 12px/1 var(--font-mono);letter-spacing:.14em}
+html.al-on .rd-dialog{background:linear-gradient(180deg,rgba(var(--sb-glass-top-rgb),.97),rgba(var(--sb-f-121c28),.98))!important;border:1px solid rgba(var(--sb-mist-rgb),.24)!important;box-shadow:0 30px 70px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.09)!important;border-radius:24px}
+html.al-on .rd-form-head{background:radial-gradient(130% 150% at 0% 0%,rgba(var(--sb-f-70a0d6),.4),rgba(var(--sb-f-70a0d6),.1) 55%,transparent 80%);border-bottom:1px solid rgba(var(--sb-mist-rgb),.14)}
+html.al-on .rd-form-head .sb-eyebrow{color:rgb(var(--sb-f-bfd3e8));font:600 12px/1 var(--font-mono);letter-spacing:.14em}
 html.al-on .rd-x{background:rgba(255,255,255,.06);border-color:rgba(var(--sb-mist-rgb),.22)}
 html.al-on .rd-form-body{padding:10px 18px 16px;display:flex;flex-direction:column;gap:12px}
-html.al-on .rd-sec{--t:168,159,198;margin:0;padding:16px 16px 18px;border:1px solid rgba(255,255,255,.08)!important;border-radius:18px;background:linear-gradient(98deg,rgba(112,160,214,.2) 0%,rgba(112,160,214,.06) 50%,rgba(112,160,214,0) 85%),linear-gradient(98deg,rgba(var(--t),.07),rgba(var(--t),0) 60%),rgba(255,255,255,.025);box-shadow:inset 3px 0 0 rgba(var(--t),.55)}
+html.al-on .rd-sec{--t:168,159,198;margin:0;padding:16px 16px 18px;border:1px solid rgba(255,255,255,.08)!important;border-radius:18px;background:linear-gradient(98deg,rgba(var(--sb-f-70a0d6),.2) 0%,rgba(var(--sb-f-70a0d6),.06) 50%,rgba(var(--sb-f-70a0d6),0) 85%),linear-gradient(98deg,rgba(var(--t),.07),rgba(var(--t),0) 60%),rgba(255,255,255,.025);box-shadow:inset 3px 0 0 rgba(var(--t),.55)}
 html.al-on .rd-sec:nth-child(2){--t:112,160,214}
 html.al-on .rd-sec[data-amount="water"]{--t:104,186,176}
 html.al-on .rd-sec[data-amount="protein"]{--t:142,192,138}
@@ -379,28 +908,28 @@ html.al-on .rd-sec:nth-last-child(2){--t:218,138,102}
 html.al-on .rd-sec:last-child{--t:218,172,88}
 html.al-on .rd-sec h3{font:600 12px/1 var(--font-mono);letter-spacing:.14em;text-transform:uppercase;color:rgba(var(--t),.85)}
 html.al-on .rd-scale legend{font:600 17px/1.2 var(--font-body)}
-html.al-on .rd-scale-word{font:400 22px/1 var(--font-display);letter-spacing:.03em;text-transform:uppercase;color:#CFE0F0}
-html.al-on .rd-scale-row span{min-height:54px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(var(--sb-mist-rgb),.18);font:400 24px/1 var(--font-display);color:rgba(228,238,246,.85)}
-html.al-on .rd-scale-row input:checked + span{background:linear-gradient(180deg,#DCE8F2,#B6CADB);border-color:transparent;color:#10202c;box-shadow:0 8px 22px rgba(150,190,226,.35),inset 0 1px 0 rgba(255,255,255,.7)}
+html.al-on .rd-scale-word{font:400 22px/1 var(--font-display);letter-spacing:.03em;text-transform:uppercase;color:rgb(var(--sb-f-cfe0f0))}
+html.al-on .rd-scale-row span{min-height:54px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(var(--sb-mist-rgb),.18);font:400 24px/1 var(--font-display);color:rgba(var(--sb-f-e4eef6),.85)}
+html.al-on .rd-scale-row input:checked + span{background:linear-gradient(180deg,rgb(var(--sb-f-dce8f2)),rgb(var(--sb-f-b6cadb)));border-color:transparent;color:rgb(var(--sb-f-10202c));box-shadow:0 8px 22px rgba(var(--sb-f-96bee2),.35),inset 0 1px 0 rgba(255,255,255,.7)}
 html.al-on .rd-tag > span{border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(var(--sb-mist-rgb),.18)}
-html.al-on .rd-tag input:checked + span{background:rgba(var(--sb-accent-rgb),.2);border-color:var(--sb-accent);color:#E4EEF6}
+html.al-on .rd-tag input:checked + span{background:rgba(var(--sb-accent-rgb),.2);border-color:var(--sb-accent);color:rgb(var(--sb-f-e4eef6))}
 html.al-on .rd-tag-warn input:checked + span{background:rgba(212,170,98,.18);border-color:var(--amber);color:var(--amber)}
 html.al-on .rd-form-foot{background:rgba(var(--sb-deep-rgb),.4);border-top:1px solid rgba(var(--sb-mist-rgb),.14)}
-html.al-on .rd-form-foot .sb-btn{border-radius:14px;min-height:54px;box-shadow:0 10px 26px rgba(150,190,226,.25)}
+html.al-on .rd-form-foot .sb-btn{border-radius:14px;min-height:54px;box-shadow:0 10px 26px rgba(var(--sb-f-96bee2),.25)}
 html.al-on .rd-field textarea,html.al-on .rd-field input[type=text]{background:rgba(255,255,255,.05)!important;border:1px solid rgba(var(--sb-mist-rgb),.2)!important;border-radius:12px!important;color:var(--text)!important;padding:12px 14px!important;font:inherit!important}
-html.al-on .rd-amount .rd-wbar i{background:#9CC0E4}
+html.al-on .rd-amount .rd-wbar i{background:rgb(var(--sb-f-9cc0e4))}
 html.al-on .rd-wpreset.is-on,html.al-on .rd-amount[data-amount] .rd-wpreset.is-on{border-color:var(--sb-accent)!important;background:rgba(var(--sb-accent-rgb),.2)!important}
 /* Bars and round buttons: blue glass, with a faint section colour under the selected tab (Eddie 2026-11-11, option B) */
 @media (max-width:900px){
-  html.al-on .eos-subnav{background:linear-gradient(180deg,rgba(64,92,118,.8),rgba(22,34,46,.86))!important;border:1px solid rgba(var(--sb-mist-rgb),.28)!important;box-shadow:inset 0 1px 0 rgba(235,244,252,.28),0 12px 28px rgba(0,0,0,.4)!important}
+  html.al-on .eos-subnav{background:linear-gradient(180deg,rgba(var(--sb-f-405c76),.8),rgba(var(--sb-f-16222e),.86))!important;border:1px solid rgba(var(--sb-mist-rgb),.28)!important;box-shadow:inset 0 1px 0 rgba(var(--sb-f-ebf4fc),.28),0 12px 28px rgba(0,0,0,.4)!important}
   html.al-on .eos-subnav-link{color:rgba(var(--sb-mist-rgb),.78)!important}
-  html.al-on .eos-subnav-link.active{background:linear-gradient(180deg,#DCE8F2,#B6CADB)!important;color:#10202c!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 6px 18px rgba(150,190,226,.35)!important}
-  html.al-on .eos-mobile-topbar .eos-mobile-icon-btn,html.al-on .eos-mobile-topbar .account-btn{background:linear-gradient(180deg,rgba(64,92,118,.78),rgba(var(--sb-glass-rgb),.8))!important;border:1px solid rgba(var(--sb-mist-rgb),.3)!important;box-shadow:inset 0 1px 0 rgba(235,244,252,.28),0 8px 18px rgba(0,0,0,.35)!important;color:#E4EEF6!important}
-  html.al-on .eos-mobile-topbar .account-avatar{background:linear-gradient(180deg,#58809F,#2C4964)!important;color:#F1F6FB!important;box-shadow:0 0 0 2px rgba(var(--sb-mist-rgb),.4)}
-  html.al-on .eos-mobile-topbar .account-avatar *{color:#F1F6FB!important}
-  html.al-on .eos-bottomnav{background:linear-gradient(180deg,rgba(64,92,118,.8),rgba(22,34,46,.86))!important;border:1px solid rgba(var(--sb-mist-rgb),.28)!important}
-  html.al-on .eos-bottomnav-item.active{background:linear-gradient(180deg,#DCE8F2,#B6CADB)!important;color:#10202c!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 6px 18px rgba(150,190,226,.35)!important}
-  html.al-on .eos-bottomnav-item.active .ui-icon{color:#10202c!important}
+  html.al-on .eos-subnav-link.active{background:linear-gradient(180deg,rgb(var(--sb-f-dce8f2)),rgb(var(--sb-f-b6cadb)))!important;color:rgb(var(--sb-f-10202c))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 6px 18px rgba(var(--sb-f-96bee2),.35)!important}
+  html.al-on .eos-mobile-topbar .eos-mobile-icon-btn,html.al-on .eos-mobile-topbar .account-btn{background:linear-gradient(180deg,rgba(var(--sb-f-405c76),.78),rgba(var(--sb-glass-rgb),.8))!important;border:1px solid rgba(var(--sb-mist-rgb),.3)!important;box-shadow:inset 0 1px 0 rgba(var(--sb-f-ebf4fc),.28),0 8px 18px rgba(0,0,0,.35)!important;color:rgb(var(--sb-f-e4eef6))!important}
+  html.al-on .eos-mobile-topbar .account-avatar{background:linear-gradient(180deg,rgb(var(--sb-f-58809f)),rgb(var(--sb-f-2c4964)))!important;color:rgb(var(--sb-f-f1f6fb))!important;box-shadow:0 0 0 2px rgba(var(--sb-mist-rgb),.4)}
+  html.al-on .eos-mobile-topbar .account-avatar *{color:rgb(var(--sb-f-f1f6fb))!important}
+  html.al-on .eos-bottomnav{background:linear-gradient(180deg,rgba(var(--sb-f-405c76),.8),rgba(var(--sb-f-16222e),.86))!important;border:1px solid rgba(var(--sb-mist-rgb),.28)!important}
+  html.al-on .eos-bottomnav-item.active{background:linear-gradient(180deg,rgb(var(--sb-f-dce8f2)),rgb(var(--sb-f-b6cadb)))!important;color:rgb(var(--sb-f-10202c))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 6px 18px rgba(var(--sb-f-96bee2),.35)!important}
+  html.al-on .eos-bottomnav-item.active .ui-icon{color:rgb(var(--sb-f-10202c))!important}
 }
 @media (max-width:900px){
   html.al-on .eos-subnav-link:nth-child(1).active{--t:112,160,214}
@@ -417,7 +946,7 @@ html.al-on .rd-wpreset.is-on,html.al-on .rd-amount[data-amount] .rd-wpreset.is-o
   html.al-on .eos-bottomnav-item.active{box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 8px 20px rgba(var(--t,150,190,226),.45),inset 0 -3px 0 rgba(var(--t,150,190,226),.55)!important}
 }
 /* No raw words before the lockup is drawn; bigger, with the lines glowing */
-.eos-splash-lock>svg{filter:drop-shadow(0 0 .3em rgba(200,216,230,.5))}
+.eos-splash-lock>svg{filter:drop-shadow(0 0 .3em rgba(var(--sb-f-c8d8e6),.5))}
 .eos-splash.sb-hit .eos-splash-glow{animation:sb-glow-hit 1.1s ease-out forwards!important}
 @media (prefers-reduced-motion:reduce){
   .eos-splash.sb-hit .eos-splash-glow{animation:none!important}
@@ -429,7 +958,7 @@ html.al-on .rd-wpreset.is-on,html.al-on .rd-amount[data-amount] .rd-wpreset.is-o
    or its text goes dark on dark. js/appLook.js tags any other dark box it finds (.al-dk). */
 /* The page ground is pale mist; every card, bar and dialog stays deep blue. */
 html.al-light{
-  --text:var(--sb-ink);--text-secondary:var(--sb-ink-2);--muted:var(--sb-ink-3);--border:rgba(19,32,43,.16);
+  --text:var(--sb-ink);--text-secondary:var(--sb-ink-2);--muted:var(--sb-ink-3);--border:rgba(var(--sb-f-13202b),.16);
   background:var(--sb-ground)!important;color:var(--text)}
 html.al-light .al-bg{background:linear-gradient(180deg,var(--sb-ground-top) 0%,var(--sb-ground) 55%,var(--sb-ground-low) 100%)!important}
 html.al-light .al-bg::before{background:radial-gradient(60% 38% at 72% 10%,rgba(255,255,255,.55),transparent)!important}
@@ -438,8 +967,8 @@ html.al-light .eos-today-card,html.al-light .eos-nutrition-snap,html.al-light .c
   --text:var(--sb-on-card);--text-secondary:var(--sb-on-card-2);--muted:var(--sb-on-card-3);--border:rgba(var(--sb-mist-rgb),.14);color:var(--text)}
 html.al-light :is(.coach-soccer-link,.coach-queue,.coach-week,.eos-today-card,.eos-nutrition-snap,.clients-card,.rd-card,.card,.ci-strip,.clients-empty,.coach-focus,.coach-tools,.ct-card,.ct-stat,.hw-card,.hw-prep,.pl-card,.sched-request-row,.sched-session-row,.sched-slot-card,.sched-slot-form,.sched-weekwrap,.wr-lead,.wr-reading,.fx-day,.planner-grid,#todayCard,#weekSection,#weekMilesCard,#todayHabits,#coachCardSection,#nutritionSnap,#featuredTraining,#readinessCard .rd-body):not(.rd-none){
   background:linear-gradient(180deg,var(--sb-card-top),var(--sb-card-bottom))!important;border-color:rgba(var(--sb-mist-rgb),.2)!important;
-  box-shadow:inset 0 1px 0 rgba(var(--sb-mist-rgb),.16),0 10px 22px rgba(30,50,70,.28)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
-html.al-light :is(.eos-navbar,.eos-bottomnav){background:rgba(26,43,59,.94)!important}
+  box-shadow:inset 0 1px 0 rgba(var(--sb-mist-rgb),.16),0 10px 22px rgba(var(--sb-f-1e3246),.28)!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+html.al-light :is(.eos-navbar,.eos-bottomnav){background:rgba(var(--sb-f-1a2b3b),.94)!important}
 html.al-light .al-bg~*{}
 html.al-light .eos-today-eyebrow,html.al-light .coach-clients-all{color:var(--text-secondary)!important}
 html.al-light .coach-clients-all{color:var(--sb-ink-link)!important;font-weight:600}

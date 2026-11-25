@@ -580,7 +580,7 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
 #bookForm > *:not(.sched-radio-row){ grid-column:1 / -1; }
 #bookForm .sched-radio-row{ margin:0; padding:0; position:relative; display:block; }
 #bookForm .sched-radio-row input{ position:absolute; opacity:0; inset:0; width:100%; height:100%; margin:0; cursor:pointer; }
-#bookForm .sched-radio-row span{ display:grid; place-items:center; min-height:48px; padding:0 8px; text-align:center; border:1px solid rgba(214,228,240,.2); border-radius:12px; background:rgba(214,228,240,.06); font:600 14px var(--font-body); color:var(--text); }
+#bookForm .sched-radio-row span{ display:grid; place-items:center; min-height:48px; padding:0 8px; text-align:center; border:1px solid rgba(var(--sb-mist-rgb),.2); border-radius:12px; background:rgba(var(--sb-mist-rgb),.06); font:600 14px var(--font-body); color:var(--text); }
 #bookForm .sched-radio-row input:checked + span{ background:var(--cream); color:var(--on-primary); border-color:transparent; }
 #bookForm .sched-radio-row input:focus-visible + span{ outline:2px solid var(--primary); outline-offset:2px; }
 #bookForm .clients-editor-actions{ display:grid; gap:8px; }
@@ -588,11 +588,11 @@ a.sched-ev:hover{ background:rgba(236,230,212,.14); }
 
 /* Your progress (client Sessions): two numbers and what you worked on last time */
 .sb-progress{ margin:0 0 22px; }
-.sb-progress-card{ padding:16px; border:1px solid rgba(214,228,240,.2); border-radius:18px; background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72)); box-shadow:inset 0 1px 0 rgba(214,228,240,.16),0 12px 30px rgba(0,0,0,.36); }
+.sb-progress-card{ padding:16px; border:1px solid rgba(var(--sb-mist-rgb),.2); border-radius:18px; background:linear-gradient(180deg,rgba(var(--sb-glass-top-rgb),.8),rgba(var(--sb-glass-rgb),.72)); box-shadow:inset 0 1px 0 rgba(var(--sb-mist-rgb),.16),0 12px 30px rgba(0,0,0,.36); }
 .sb-progress-stats{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .sb-progress-stats b{ display:block; font:800 36px/1 var(--font-display); color:var(--text); }
 .sb-progress-stats span{ display:block; margin-top:4px; color:var(--text-secondary); font-size:13px; }
-.sb-progress-last{ margin-top:14px; padding-top:12px; border-top:1px solid rgba(214,228,240,.14); }
+.sb-progress-last{ margin-top:14px; padding-top:12px; border-top:1px solid rgba(var(--sb-mist-rgb),.14); }
 .sb-progress-last p{ margin:6px 0 0; color:var(--text); font-size:15px; line-height:1.45; }
 .sb-progress[hidden],.sb-progress-last[hidden]{ display:none !important; }
 
@@ -726,7 +726,7 @@ a.ac-card:hover{ border-color:var(--primary); }
 .ss-hint{ margin:0; color:var(--muted); font-size:13px; }
 .ss-part-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
 .ss-kind{ min-height:44px; padding:0 10px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); font:600 12px var(--font-mono); letter-spacing:.08em; text-transform:uppercase; }
-.ss-kind option{ color:#16212b; }
+.ss-kind option{ color:rgb(var(--sb-f-16212b)); }
 .ss-mins{ display:flex; align-items:center; gap:6px; color:var(--muted); font:600 12px var(--font-mono); }
 .ss-mins input{ width:72px; min-height:44px; padding:0 8px; text-align:right; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); font:700 16px var(--font-mono); }
 .ss-note{ resize:vertical; min-height:60px; font-size:16px; }

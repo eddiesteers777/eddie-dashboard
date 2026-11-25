@@ -70,6 +70,7 @@ const ACCOUNT_LOCAL_STORAGE_KEYS = [
     "prayer-checks",
     "bible-plan",
     "bible-carry",
+    "southbound-look",          // colourway and Night mode (js/appLookBoot.js): synced, so it goes with the account
     "readiness-history",
     "training-progress",
     "training-overrides",
