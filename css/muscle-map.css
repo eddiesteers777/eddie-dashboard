@@ -4,7 +4,7 @@
    main muscles tan, helping sage; chips under it.
 ========================================== */
 
-.mm{ display:flex; flex-direction:column; gap:10px; padding:14px 14px 16px; border-radius:16px; background:#0E251B; border:1px solid color-mix(in srgb, var(--primary, #C9AD84) 22%, transparent); color:var(--text, #F3EFE6); }
+.mm{ display:flex; flex-direction:column; gap:10px; padding:14px 14px 16px; border-radius:var(--sb-r-lg,16px); background:#0E251B; border:1px solid color-mix(in srgb, var(--primary, #C9AD84) 22%, transparent); color:var(--text, #F3EFE6); }
 .mm-title{ margin:0; color:var(--primary, #C9AD84); font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
 .mm-figs{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .mm-figs figure{ margin:0; text-align:center; }

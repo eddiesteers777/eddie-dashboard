@@ -64,7 +64,7 @@
     padding:12px 14px;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-md,12px);
     color:var(--text);
     font:16px var(--font-body);
     color-scheme:dark;
@@ -96,7 +96,7 @@ textarea.ig-input{ resize:vertical; min-height:88px; line-height:1.5; }
     cursor:pointer;
     transition:border-color .15s ease, background-color .15s ease, transform .1s ease;
 }
-.ig-days .ig-chip{ padding:8px 0; border-radius:12px; }
+.ig-days .ig-chip{ padding:8px 0; border-radius:var(--sb-r-sm,12px); }
 .ig-chip:hover{ border-color:rgba(201,173,132,.6); }
 .ig-chip:active{ transform:scale(.97); }
 .ig-chip.is-on{
@@ -111,7 +111,7 @@ textarea.ig-input{ resize:vertical; min-height:88px; line-height:1.5; }
     width:100%;
     min-height:56px;
     padding:12px 18px;
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     font-size:15.5px;
     text-align:left;
 }

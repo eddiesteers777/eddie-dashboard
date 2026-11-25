@@ -10,7 +10,7 @@
     grid-template-columns:minmax(300px, 360px) minmax(0, 1fr);
     min-height:620px;
     border:1px solid var(--sb-bubble-raised-border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     background:var(--sb-bubble-raised-bg);
     box-shadow:var(--sb-bubble-raised-shadow);
     overflow:hidden;
@@ -18,7 +18,7 @@
 
 /* ----- list ----- */
 .cm-list{ min-width:0; border-right:1px solid var(--border); background:color-mix(in srgb, var(--bg) 40%, transparent); display:flex; flex-direction:column; }
-.cm-search{ position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:8px; margin:12px; padding:0 12px; height:44px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--muted); }
+.cm-search{ position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:8px; margin:12px; padding:0 12px; height:44px; border:1px solid var(--border); border-radius:var(--sb-r-md,8px); background:var(--bg); color:var(--muted); }
 .cm-search input{ flex:1; min-width:0; height:100%; border:0; outline:0; background:none; color:var(--text); font:inherit; font-size:16px; }
 .cm-group{ padding:10px 16px 6px; border-top:1px solid var(--border); background:color-mix(in srgb, var(--bg) 55%, transparent); color:var(--primary); font:600 10.5px var(--font-mono); letter-spacing:.13em; text-transform:uppercase; }
 .cm-item{ display:flex; align-items:flex-start; gap:12px; width:100%; min-height:44px; padding:13px 16px; border:0; border-top:1px solid var(--border); background:none; color:var(--text); text-align:left; font:inherit; cursor:pointer; }
@@ -31,7 +31,7 @@
 .cm-when{ flex:0 0 auto; color:var(--muted); font:500 11px var(--font-mono); text-transform:uppercase; white-space:nowrap; }
 .cm-preview{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-secondary); font-size:13.5px; }
 .cm-item.is-unread .cm-preview{ color:var(--text); font-weight:600; }
-.cm-count{ flex:0 0 auto; min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--primary); color:var(--on-primary); font:700 11px/20px var(--font-mono); text-align:center; }
+.cm-count{ flex:0 0 auto; min-width:20px; height:20px; padding:0 6px; border-radius:var(--sb-r-sm,10px); background:var(--primary); color:var(--on-primary); font:700 11px/20px var(--font-mono); text-align:center; }
 .cm-none{ margin:0; padding:24px 16px; color:var(--text-secondary); }
 
 /* ----- thread pane ----- */
@@ -48,9 +48,9 @@
 .cm-head-who span{ color:var(--muted); font:500 11px var(--font-mono); letter-spacing:.08em; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .cm-back{ display:none; }
 .cm-thread{ grid-area:thread; min-width:0; padding:14px 16px 4px; }
-.cm-thread .msg-list{ max-height:min(56vh, 520px); border-radius:12px; }
+.cm-thread .msg-list{ max-height:min(56vh, 520px); border-radius:var(--sb-r-sm,12px); }
 .cm-quick{ grid-area:quick; display:flex; flex-wrap:wrap; gap:6px; padding:0 16px 16px; }
-.cm-chip{ min-height:44px; padding:8px 14px; border:1px solid var(--border); border-radius:8px; background:none; color:var(--text); font:inherit; font-size:14px; cursor:pointer; text-align:left; }
+.cm-chip{ min-height:44px; padding:8px 14px; border:1px solid var(--border); border-radius:var(--sb-r-sm,8px); background:none; color:var(--text); font:inherit; font-size:14px; cursor:pointer; text-align:left; }
 .cm-chip:hover{ background:var(--sb-glass-bg); }
 
 /* ----- about this client ----- */
@@ -60,7 +60,7 @@
 .cm-ctx.is-open .cm-ctx-body{ display:flex; }
 .cm-ctx h3{ margin:0 0 3px; color:var(--primary); font:600 10.5px var(--font-mono); letter-spacing:.13em; text-transform:uppercase; }
 .cm-ctx p{ margin:0; color:var(--text-secondary); font-size:14px; }
-.cm-flag{ padding:9px 11px; border-radius:8px; background:color-mix(in srgb, var(--red) 12%, transparent); border:1px solid color-mix(in srgb, var(--red) 35%, transparent); font-size:13.5px; line-height:1.4; }
+.cm-flag{ padding:9px 11px; border-radius:var(--sb-r-sm,8px); background:color-mix(in srgb, var(--red) 12%, transparent); border:1px solid color-mix(in srgb, var(--red) 35%, transparent); font-size:13.5px; line-height:1.4; }
 .cm-ctx .sb-btn{ width:100%; justify-content:center; }
 
 .cm-empty{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:40px 24px; text-align:center; color:var(--text-secondary); }

@@ -11,7 +11,7 @@
     padding:4px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
 }
 
 .running-section-tab{
@@ -20,7 +20,7 @@
     background:transparent;
     color:var(--text-secondary);
     padding:8px 18px;
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
     font:inherit;
     font-size:13px;
     font-weight:700;
@@ -139,7 +139,7 @@
     appearance:none;
     border:1px solid var(--border);
     border-top:3px solid var(--race-color, var(--border));
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     background:var(--surface-light);
     color:var(--text);
     padding:14px 12px;
@@ -220,7 +220,7 @@
     padding:9px 11px;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     color:var(--text);
     font:inherit;
     font-size:12.5px;
@@ -240,7 +240,7 @@
     min-height:38px;
     padding:0 12px;
     border:1px solid var(--border);
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
     background:rgba(255,255,255,.025);
 }
 
@@ -283,7 +283,7 @@
     min-height:34px;
     padding:7px 11px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
     background:var(--surface-light);
     color:var(--text-secondary);
     font-size:11px;
@@ -311,7 +311,7 @@
     padding:11px 12px;
     border-left:3px solid var(--primary);
     background:rgba(201,173,132,.055);
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
 }
 
 .race-plan-callout strong,
@@ -349,7 +349,7 @@
     justify-content:center;
     min-height:38px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
     background:var(--surface-light);
     color:var(--text-secondary);
     font-family:var(--font-mono);
@@ -383,7 +383,7 @@
     padding:12px;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:11px;
+    border-radius:var(--sb-r-sm,11px);
 }
 
 .race-plan-review-block span,
@@ -488,7 +488,7 @@
     appearance:none;
     width:100%;
     border:1px solid var(--border);
-    border-radius:11px;
+    border-radius:var(--sb-r-sm,11px);
     background:rgba(255,255,255,.025);
     color:var(--text-secondary);
     padding:11px 12px;
@@ -586,7 +586,7 @@
     min-width:86px;
     padding:9px 10px;
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:var(--surface-light);
     box-shadow:0 6px 16px rgba(0,0,0,.18);
 }
@@ -620,7 +620,7 @@
     background:var(--surface-light);
     border:1px solid var(--border);
     border-top:3px solid var(--phase-color, var(--primary));
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
 }
 
 .race-plan-generation-phase-card span,
@@ -639,7 +639,7 @@
 
 .race-plan-generation-weeklist{
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     overflow:hidden;
     box-shadow:0 8px 20px rgba(0,0,0,.18);
 }
@@ -696,7 +696,7 @@
     margin-bottom:12px;
     padding:10px 11px;
     border-left:3px solid var(--yellow);
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
     background:color-mix(in srgb, var(--yellow) 5%, transparent);
     color:var(--text-secondary);
     font-size:10px;
@@ -726,7 +726,7 @@
     margin-top:12px;
     padding:10px 11px;
     border-left:3px solid var(--primary);
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
     background:rgba(201,173,132,.05);
     color:var(--text-secondary);
     font-size:10px;
@@ -959,7 +959,7 @@
     min-width:0;
     padding:13px;
     border:1px solid var(--border);
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     background:var(--surface-light);
     box-shadow:0 8px 20px rgba(0,0,0,.2);
     transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
@@ -1143,7 +1143,7 @@
 .race-plan-manager-empty{
     padding:12px;
     border:1px dashed var(--border);
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
     color:var(--muted);
     font-size:10px;
 }
@@ -1218,7 +1218,7 @@
     padding:13px;
     border:1px solid rgba(201,173,132,.22);
     border-left:3px solid var(--primary);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     background:rgba(201,173,132,.045);
     box-shadow:0 8px 20px rgba(0,0,0,.18);
 }
@@ -1248,7 +1248,7 @@
     min-width:82px;
     padding:7px 9px;
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:var(--surface-light);
     text-align:center;
     box-shadow:0 6px 16px rgba(0,0,0,.18);
@@ -1280,7 +1280,7 @@
     min-width:0;
     padding:8px 9px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
     background:rgba(255,255,255,.02);
 }
 

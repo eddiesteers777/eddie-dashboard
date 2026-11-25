@@ -2142,7 +2142,7 @@ function renderSavedPlans() {
         group.className = "fuel-plan-week-group";
 
         group.innerHTML = `
-            <h3 class="fuel-plan-week-heading">Custom Plans</h3>
+            <h3 class="fuel-plan-week-heading">Custom plans</h3>
             <div class="fuel-saved-plans-grid">${custom.slice().reverse().map(planCardHTML).join("")}</div>
         `;
 

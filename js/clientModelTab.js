@@ -245,7 +245,7 @@ export function mountClientModel(el, { data, clientUid, firstName = "your client
                 <div class="cm-grid">${raceHtml(m)}${loadHtml(m, first)}${readinessHtml(m)}</div>
                 ${racesHtml(m, first)}`}
                 <details class="as-fold" id="cmState"${stateOpen ? " open" : ""}>
-                    <summary><div><h3>Athlete State</h3><p>Everything Southbound knows about ${esc(first)}, the way weekly planning will read it: what kind of fact each number is, how sure, and what it stands on. Tap to open.</p></div></summary>
+                    <summary><div><h3>Athlete state</h3><p>Everything Southbound knows about ${esc(first)}, the way weekly planning will read it: what kind of fact each number is, how sure, and what it stands on. Tap to open.</p></div></summary>
                     <section class="as-panel" id="cmStatePanel" aria-live="polite"></section>
                 </details>
             </div>`;

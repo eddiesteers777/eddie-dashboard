@@ -8,7 +8,7 @@
 
 /* A list of rebuilt workouts outside Analytics (the Client Hub). */
 .ex-runs{ list-style:none; margin:12px 0 0; padding:0; display:grid; gap:10px; }
-.ex-run{ padding:12px 14px; border:1px solid var(--border); border-left:3px solid var(--border); border-radius:12px; background:color-mix(in srgb, var(--text) 2%, transparent); min-width:0; }
+.ex-run{ padding:12px 14px; border:1px solid var(--border); border-left:3px solid var(--border); border-radius:var(--sb-r-sm,12px); background:color-mix(in srgb, var(--text) 2%, transparent); min-width:0; }
 .ex-run.good{ border-left-color:var(--good); }
 .ex-run.ok{ border-left-color:var(--primary); }
 .ex-run.off{ border-left-color:var(--bad); }
@@ -26,7 +26,7 @@
 .ex-read{ list-style:none; margin:8px 0 0; padding:0; display:grid; gap:3px; }
 .ex-read li{ color:var(--text); font-size:.86rem; line-height:1.4; }
 .ex-read li:first-child{ font-weight:600; }
-.ex-strip{ display:flex; gap:2px; height:14px; margin-top:10px; border-radius:4px; overflow:hidden; }
+.ex-strip{ display:flex; gap:2px; height:14px; margin-top:10px; border-radius:var(--sb-r-xs,4px); overflow:hidden; }
 .ex-seg{ flex-basis:0; min-width:3px; background:var(--border); }
 .ex-seg.ex-easy{ background:color-mix(in srgb, var(--muted) 35%, transparent); }
 .ex-seg.ex-rec{ background:color-mix(in srgb, var(--muted) 18%, transparent); }
@@ -68,7 +68,7 @@
 @media (max-width:600px){
     .ex-table thead{ display:none; }
     .ex-table, .ex-table tbody{ display:block; }
-    .ex-table tr.ex-row{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:2px 10px; padding:8px 10px; margin-top:6px; border:1px solid var(--border); border-left-width:3px; border-radius:10px; }
+    .ex-table tr.ex-row{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:2px 10px; padding:8px 10px; margin-top:6px; border:1px solid var(--border); border-left-width:3px; border-radius:var(--sb-r-sm,10px); }
     .ex-table tr.ex-within{ border-left-color:var(--good); }
     .ex-table tr.ex-fast{ border-left-color:var(--cyan); }
     .ex-table tr.ex-slow{ border-left-color:var(--amber); }

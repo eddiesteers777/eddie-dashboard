@@ -31,7 +31,7 @@
 .more-page .eos-more-account-info strong{ font:650 17px/1.25 var(--font-body); color:var(--text); }
 .more-page .eos-more-account-info span{ font-size:14px; color:var(--text-secondary); }
 .more-page .eos-more-sync-btn{ min-height:44px; font-size:14px; color:var(--text-secondary); }
-.more-page .eos-more-account-btn{ min-height:44px; border-radius:14px; font:650 15px/1 var(--font-body); }
+.more-page .eos-more-account-btn{ min-height:44px; border-radius:var(--sb-r-md,14px); font:650 15px/1 var(--font-body); }
 .more-page #moreLoginBtn{
     background:linear-gradient(180deg,#E8CFA6,var(--primary));
     box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 10px 26px -12px rgba(214,185,142,.7);

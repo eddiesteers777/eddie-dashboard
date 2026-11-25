@@ -284,7 +284,7 @@
     background:var(--surface);
     border:1px solid var(--border);
     border-left:3px solid var(--primary);
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     padding:20px 24px 22px;
 
 }
@@ -302,7 +302,7 @@
 
     width:48px;
     height:48px;
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
     object-fit:cover;
     background:var(--surface-light);
     flex-shrink:0;
@@ -341,7 +341,7 @@
     line-height:1;
     cursor:pointer;
     padding:4px 8px;
-    border-radius:8px;
+    border-radius:var(--sb-r-sm,8px);
     transition:.15s;
     flex-shrink:0;
 
@@ -416,7 +416,7 @@
     background:var(--surface-light);
     border:1px solid var(--border);
     color:var(--text);
-    border-radius:8px;
+    border-radius:var(--sb-r-md,8px);
     padding:6px 8px;
     font-family:var(--font-mono);
     font-size:14px;
@@ -442,7 +442,7 @@
 
     width:24px;
     height:24px;
-    border-radius:7px;
+    border-radius:var(--sb-r-xs,7px);
     border:1px solid var(--border);
     background:var(--surface-light);
     cursor:pointer;
@@ -470,7 +470,7 @@
     font-size:16px;
     cursor:pointer;
     padding:4px 6px;
-    border-radius:6px;
+    border-radius:var(--sb-r-xs,6px);
     transition:.15s;
 
 }
@@ -486,7 +486,7 @@
     margin-top:12px;
     background:transparent;
     border:1px dashed var(--border);
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     padding:8px 14px;
     color:var(--text-secondary);
     font-size:13px;
@@ -508,7 +508,7 @@
 
     background:var(--surface-light);
     border:1px dashed var(--border);
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     padding:20px;
     color:var(--text-secondary);
     font-size:15px;
@@ -598,7 +598,7 @@
 }
 
 .strength-exercise-block{
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     padding:13px 16px 15px;
 }
 
@@ -611,7 +611,7 @@
 .strength-exercise-image{
     width:40px;
     height:40px;
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
 }
 
 .strength-exercise-name{
@@ -630,7 +630,7 @@
     min-width:26px;
     height:34px;
     border:1px solid transparent;
-    border-radius:8px;
+    border-radius:var(--sb-r-sm,8px);
     cursor:grab;
     touch-action:none;
 }
@@ -725,7 +725,7 @@
             rgba(14,26,20,.98)
         );
     border:1px solid var(--border);
-    border-radius:24px;
+    border-radius:var(--sb-r-xl,24px);
     max-width:560px;
     width:100%;
     max-height:82vh;
@@ -761,7 +761,7 @@
     color:var(--text-secondary);
     width:32px;
     height:32px;
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     cursor:pointer;
     font-size:1rem;
     transition:.2s;
@@ -788,7 +788,7 @@
     background:var(--surface-light);
     border:1px solid var(--border);
     color:var(--text);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     padding:12px 16px;
     font-size:14px;
     font-family:inherit;
@@ -887,7 +887,7 @@
     min-height:32px;
     padding:6px 9px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
     background:rgba(201,173,132,.05);
     color:var(--primary);
     cursor:pointer;
@@ -947,7 +947,7 @@
     gap:12px;
     padding:10px 12px;
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     margin-bottom:8px;
     cursor:pointer;
     transition:.15s;
@@ -965,7 +965,7 @@
 
     width:40px;
     height:40px;
-    border-radius:8px;
+    border-radius:var(--sb-r-sm,8px);
     object-fit:cover;
     background:var(--surface-light);
     flex-shrink:0;
@@ -1029,7 +1029,7 @@
             rgba(14,26,20,.98)
         );
     border:1px solid var(--border);
-    border-radius:20px;
+    border-radius:var(--sb-r-lg,20px);
     max-width:360px;
     width:100%;
     padding:22px;
@@ -1101,7 +1101,7 @@
             rgba(14,26,20,.98)
         );
     border:1px solid var(--border);
-    border-radius:20px;
+    border-radius:var(--sb-r-lg,20px);
     max-width:460px;
     width:100%;
     max-height:calc(100dvh - 40px);
@@ -1135,7 +1135,7 @@
     resize:vertical;
     background:rgba(0,0,0,.25);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-md,12px);
     padding:14px;
     color:var(--text);
     font-family:var(--font-mono);
@@ -1177,7 +1177,7 @@
     margin:0 0 12px;
     padding:16px 18px;
     border:1px solid var(--border);
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     background:rgba(255,255,255,.025);
 }
 
@@ -1214,7 +1214,7 @@
     width:64px;
     padding:7px 8px;
     border:1px solid var(--border);
-    border-radius:8px;
+    border-radius:var(--sb-r-md,8px);
     background:var(--surface-light);
     color:var(--text);
     font-family:var(--font-mono);
@@ -1236,7 +1236,7 @@
     border:1px solid var(--border);
     background:transparent;
     color:var(--text-secondary);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     font:inherit;
     cursor:pointer;
     transition:.15s;
@@ -1269,7 +1269,7 @@
     position:relative;
     overflow:hidden;
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     background:rgba(255,255,255,.018);
 }
 
@@ -1317,7 +1317,7 @@
 .strength-exercise-summary .strength-exercise-image{
     width:38px;
     height:38px;
-    border-radius:8px;
+    border-radius:var(--sb-r-sm,8px);
 }
 
 .strength-exercise-summary .strength-exercise-info{
@@ -1397,7 +1397,7 @@
     justify-content:center;
     padding:0;
     border:1px solid var(--border);
-    border-radius:8px;
+    border-radius:var(--sb-r-md,8px);
     background:transparent;
     color:var(--text-secondary);
     cursor:pointer;
@@ -1485,7 +1485,7 @@
     margin:0 0 14px 58px;
     padding:12px;
     border:1px solid var(--border);
-    border-radius:11px;
+    border-radius:var(--sb-r-sm,11px);
     background:rgba(255,255,255,.018);
 }
 
@@ -1508,7 +1508,7 @@
     width:100%;
     padding:7px 9px;
     border:1px solid var(--border);
-    border-radius:8px;
+    border-radius:var(--sb-r-md,8px);
     background:var(--surface-light);
     color:var(--text);
     font:inherit;
@@ -1541,7 +1541,7 @@
     min-width:78px;
     padding:6px 7px;
     border:1px solid var(--border);
-    border-radius:7px;
+    border-radius:var(--sb-r-xs,7px);
     background:var(--surface-light);
     color:var(--text-secondary);
     font:inherit;
@@ -1555,7 +1555,7 @@
 .strength-group-block{
     padding:11px;
     border:1px solid var(--border);
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     background:rgba(255,255,255,.018);
 }
 
@@ -1633,7 +1633,7 @@
     width:50px;
     padding:5px 6px;
     border:1px solid var(--border);
-    border-radius:7px;
+    border-radius:var(--sb-r-md,7px);
     background:var(--surface-light);
     color:var(--text);
     font-family:var(--font-mono);
@@ -1656,7 +1656,7 @@
 .strength-empty-exercise-message{
     padding:28px;
     border:1px dashed var(--border);
-    border-radius:15px;
+    border-radius:var(--sb-r-md,15px);
     color:var(--muted);
     text-align:center;
     font-size:12px;
@@ -1694,7 +1694,7 @@
     flex-direction:column;
     background:linear-gradient(160deg,rgba(26,42,33,.99),rgba(14,26,20,.99));
     border:1px solid var(--border);
-    border-radius:22px;
+    border-radius:var(--sb-r-xl,22px);
     box-shadow:0 30px 70px rgba(0,0,0,.5);
 }
 
@@ -1730,7 +1730,7 @@
     padding:11px 12px;
     margin-bottom:7px;
     border:1px solid var(--border);
-    border-radius:11px;
+    border-radius:var(--sb-r-sm,11px);
     cursor:pointer;
 }
 
@@ -1769,7 +1769,7 @@
     min-height:130px;
     padding:20px;
     border:1px dashed var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:rgba(255,255,255,.02);
     text-align:center;
 }
@@ -1802,7 +1802,7 @@
     min-width:250px;
     padding:15px 16px;
     border:1px solid var(--primary);
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     background:rgba(15,32,25,.97);
     box-shadow:0 20px 55px rgba(0,0,0,.42);
 }
@@ -1841,7 +1841,7 @@
 .strength-rest-timer-actions button{
     padding:7px 9px;
     border:1px solid var(--border);
-    border-radius:8px;
+    border-radius:var(--sb-r-md,8px);
     background:transparent;
     color:var(--text-secondary);
     cursor:pointer;
@@ -1983,7 +1983,7 @@
 .strength-library-add-btn{
     padding:7px 10px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     background:rgba(201,173,132,.06);
     color:var(--primary);
     cursor:pointer;
@@ -2030,7 +2030,7 @@
     width:100%;
     padding:9px 10px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     background:var(--surface-light);
     color:var(--text);
     font:inherit;
@@ -2066,7 +2066,7 @@
     min-width:0;
     padding:11px 13px;
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:var(--surface);
     color:var(--text-secondary);
     cursor:pointer;
@@ -2120,7 +2120,7 @@
 .strength-myworkouts-panel{
     padding:18px;
     border:1px solid var(--border);
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     background:var(--surface);
 }
 
@@ -2146,7 +2146,7 @@
     width:34px;
     height:34px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     background:var(--surface-light);
     color:var(--text-secondary);
     cursor:pointer;
@@ -2195,7 +2195,7 @@
     justify-content:space-between;
     padding:8px;
     border:1px solid var(--border);
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
     background:rgba(255,255,255,.012);
     color:var(--text-secondary);
     cursor:pointer;
@@ -2272,7 +2272,7 @@
 .strength-agenda-add-btn{
     padding:8px 10px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     background:transparent;
     color:var(--primary);
     cursor:pointer;
@@ -2295,7 +2295,7 @@
     align-items:center;
     padding:11px;
     border:1px solid var(--border);
-    border-radius:11px;
+    border-radius:var(--sb-r-sm,11px);
     background:rgba(255,255,255,.018);
 }
 
@@ -2340,7 +2340,7 @@
     width:25px;
     height:25px;
     border:1px solid var(--border);
-    border-radius:7px;
+    border-radius:var(--sb-r-xs,7px);
     background:transparent;
     color:var(--text-secondary);
     cursor:pointer;
@@ -2397,7 +2397,7 @@
     min-width:0;
     padding:10px;
     border:1px solid var(--border);
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
     background:rgba(255,255,255,.018);
     color:var(--text-secondary);
     cursor:pointer;
@@ -2447,7 +2447,7 @@
     gap:14px;
     padding:13px 15px;
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:rgba(255,255,255,.018);
 }
 
@@ -2478,7 +2478,7 @@
 .strength-row-btn{
     padding:7px 9px;
     border:1px solid var(--border);
-    border-radius:8px;
+    border-radius:var(--sb-r-md,8px);
     background:transparent;
     color:var(--text-secondary);
     cursor:pointer;
@@ -2530,7 +2530,7 @@
     flex-direction:column;
     overflow:hidden;
     border:1px solid var(--border);
-    border-radius:22px;
+    border-radius:var(--sb-r-xl,22px);
     background:linear-gradient(160deg,rgba(26,42,33,.99),rgba(14,26,20,.99));
     box-shadow:0 35px 90px rgba(0,0,0,.55);
 }
@@ -2565,7 +2565,7 @@
 
 .strength-editor-save,
 .strength-editor-close{
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
     cursor:pointer;
     font:inherit;
     font-weight:800;
@@ -2621,7 +2621,7 @@
 .strength-schedule-modal{
     width:min(520px,100%);
     border:1px solid var(--border);
-    border-radius:20px;
+    border-radius:var(--sb-r-lg,20px);
     background:linear-gradient(160deg,rgba(26,42,33,.99),rgba(14,26,20,.99));
     box-shadow:0 30px 70px rgba(0,0,0,.52);
 }
@@ -2672,7 +2672,7 @@
     width:100%;
     padding:9px 10px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     background:var(--surface-light);
     color:var(--text);
     font:inherit;
@@ -2716,7 +2716,7 @@
     .strength-upcoming-strip,
     .strength-myworkouts-panel{
         padding:14px;
-        border-radius:15px;
+        border-radius:var(--sb-r-md,15px);
     }
 
     .strength-calendar-day{
@@ -2751,7 +2751,7 @@
 
     .strength-editor-modal{
         height:96vh;
-        border-radius:17px;
+        border-radius:var(--sb-r-lg,17px);
     }
 
     .strength-editor-header{
@@ -2801,7 +2801,7 @@
     font-size:12px;
     font-weight:800;
     padding:5px 9px;
-    border-radius:8px;
+    border-radius:var(--sb-r-sm,8px);
 }
 
 /* ==========================================
@@ -2823,7 +2823,7 @@
     padding:12px 6px;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
 }
 
 .strength-summary-stat-value{
@@ -2929,7 +2929,7 @@ button.strength-result{
     display:flex; align-items:center; gap:12px;
     padding:8px 12px 8px 8px;
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     background:rgba(255,255,255,.025);
     color:var(--text);
     font:inherit; text-align:left;
@@ -2937,7 +2937,7 @@ button.strength-result{
     transition:background .12s ease, border-color .12s ease;
 }
 button.strength-result:hover{ border-color:color-mix(in srgb, var(--primary) 50%, var(--border)); }
-button.strength-result .strength-result-image{ width:46px; height:46px; flex-shrink:0; border-radius:10px; object-fit:cover; display:grid; place-items:center; background:rgba(255,255,255,.05); color:var(--muted); }
+button.strength-result .strength-result-image{ width:46px; height:46px; flex-shrink:0; border-radius:var(--sb-r-md,10px); object-fit:cover; display:grid; place-items:center; background:rgba(255,255,255,.05); color:var(--muted); }
 button.strength-result .strength-result-image .ui-icon svg{ width:20px; height:20px; }
 button.strength-result .strength-result-info{ display:flex; flex-direction:column; gap:3px; min-width:0; }
 button.strength-result .strength-result-info strong{ font-size:14px; }
@@ -3005,11 +3005,11 @@ button.strength-result.is-added:not(.is-picked){ opacity:.75; }
 }
 .strength-set-head span{ color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; text-align:center; }
 .strength-set-head span:nth-child(2){ text-align:left; padding-left:4px; }
-.strength-set-row{ padding:4px 0; border-radius:10px; }
+.strength-set-row{ padding:4px 0; border-radius:var(--sb-r-sm,10px); }
 .strength-set-row.is-warmup{ background:color-mix(in srgb, var(--amber) 7%, transparent); }
 .strength-set-row.is-drop{ background:color-mix(in srgb, var(--orange) 7%, transparent); }
 .strength-set-badge{
-    width:34px; height:34px; border-radius:10px;
+    width:34px; height:34px; border-radius:var(--sb-r-sm,10px);
     border:1px solid var(--border);
     background:rgba(255,255,255,.05);
     color:var(--text);
@@ -3037,7 +3037,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
     height:38px;
     padding:0 6px;
     border:1px solid var(--border);
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     background:rgba(255,255,255,.04);
     color:var(--text);
     font:700 15px var(--font-body);
@@ -3060,7 +3060,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
     width:100%;
     display:inline-flex; align-items:center; justify-content:center; gap:6px;
     min-height:40px;
-    border:1px dashed var(--border); border-radius:12px;
+    border:1px dashed var(--border); border-radius:var(--sb-r-md,12px);
     background:transparent; color:var(--primary);
     font:700 14px var(--font-body);
     cursor:pointer;
@@ -3088,7 +3088,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
 .strength-exercise-editor .strength-note-field{ display:block; margin-top:10px; }
 .strength-exercise-editor .strength-note-field input{
     width:100%; height:40px; padding:0 12px;
-    border:1px solid var(--border); border-radius:10px;
+    border:1px solid var(--border); border-radius:var(--sb-r-md,10px);
     background:rgba(255,255,255,.03); color:var(--text);
 }
 
@@ -3112,7 +3112,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
     padding:6px 10px;
     margin-left:-10px;
     border:1px solid transparent;
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     background:transparent;
     color:var(--text);
     font:400 30px/1.1 var(--font-display);
@@ -3156,7 +3156,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
 .strength-set-head-btn{
     display:inline-flex; align-items:center; justify-content:center; gap:2px;
     min-height:28px; padding:0 4px;
-    border:0; border-radius:8px;
+    border:0; border-radius:var(--sb-r-md,8px);
     background:none; color:var(--primary);
     font:700 11px var(--font-body); letter-spacing:.08em; text-transform:uppercase;
     cursor:pointer; white-space:nowrap;
@@ -3177,7 +3177,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
     width:100%;
     display:flex; align-items:center; gap:8px;
     margin-top:8px; padding:12px;
-    border:1px dashed var(--border); border-radius:12px;
+    border:1px dashed var(--border); border-radius:var(--sb-r-sm,12px);
     background:transparent; color:var(--primary);
     font:700 14px var(--font-body); text-align:left; cursor:pointer;
 }
@@ -3313,7 +3313,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
     flex-direction:column;
     min-width:0;
     border:1px solid var(--border);
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     background:var(--surface);
     overflow:hidden;
     flex-shrink:0;
@@ -3406,7 +3406,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
     gap:8px;
     padding:36px 20px;
     border:1px dashed var(--border);
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     color:var(--text-secondary);
     text-align:center;
 }
@@ -3418,7 +3418,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
     place-items:center;
     width:56px;
     height:56px;
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     background:color-mix(in srgb, var(--orange) 16%, transparent);
     border:1px solid color-mix(in srgb, var(--orange) 32%, transparent);
     color:var(--orange);
@@ -3465,7 +3465,7 @@ button.strength-set-prev:hover{ color:var(--primary); }
     min-height:52px;
     padding:0 12px;
     border:0;
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:none;
     color:var(--text);
     font-size:16px;
@@ -3545,7 +3545,7 @@ html body .strength-page .strength-hero .sb-eyebrow{ display:none; }
     margin-bottom:18px;
     background:var(--sb-inset-bg);
     border:1px solid var(--border);
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
 }
 .strength-page .strength-workspace-tab{
@@ -3554,7 +3554,7 @@ html body .strength-page .strength-hero .sb-eyebrow{ display:none; }
     justify-content:center;
     padding:0 6px;
     border:0;
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     background:none;
     font:650 14px/1 var(--font-body);
     color:var(--text-secondary);
@@ -3569,13 +3569,13 @@ html body .strength-page .strength-hero .sb-eyebrow{ display:none; }
 .strength-page .strength-upcoming-strip,
 .strength-page .strength-library-panel{
     padding:18px;
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
     background:var(--sb-bubble-dark-bg);
     border:1px solid var(--sb-bubble-dark-border);
     box-shadow:var(--sb-bubble-dark-shadow);
 }
 .strength-page .strength-myworkouts-panel{ padding:0; background:none; border:0; box-shadow:none; }
-.strength-page .strength-myworkouts-panel.sp-panel{ padding:18px; border-radius:26px; background:var(--sb-bubble-dark-bg); border:1px solid var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); }
+.strength-page .strength-myworkouts-panel.sp-panel{ padding:18px; border-radius:var(--sb-r-xl,26px); background:var(--sb-bubble-dark-bg); border:1px solid var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); }
 .strength-page .strength-library-eyebrow{ font:600 11px/1.3 var(--font-mono); letter-spacing:.1em; color:var(--text-secondary); }
 .strength-page .strength-calendar-header h2,
 .strength-page .strength-agenda-header h2,
@@ -3585,7 +3585,7 @@ html body .strength-page .strength-hero .sb-eyebrow{ display:none; }
 /* A workout: a raised card with the name, a hairline, then Start (lens) and ⋮ (glass). */
 .strength-page .st-card{
     padding:18px;
-    border-radius:24px;
+    border-radius:var(--sb-r-xl,24px);
     background:var(--sb-bubble-raised-bg);
     border:1px solid var(--sb-bubble-raised-border);
     box-shadow:var(--sb-bubble-raised-shadow);
@@ -3608,10 +3608,10 @@ html body .strength-page .strength-hero .sb-eyebrow{ display:none; }
 }
 .strength-page .st-mine-new,
 .strength-page .st-mine-empty-actions .sb-btn-primary{ border-radius:999px; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); }
-.strength-page .st-mine-empty{ border-radius:26px; border:1px dashed var(--sb-glass-border); background:var(--sb-bubble-dark-bg); }
+.strength-page .st-mine-empty{ border-radius:var(--sb-r-xl,26px); border:1px dashed var(--sb-glass-border); background:var(--sb-bubble-dark-bg); }
 
 /* The calendar: quiet cells, today and the chosen day lit. */
-.strength-page .strength-calendar-day{ border-color:var(--sb-hairline); border-radius:12px; background:rgba(236,230,212,.025); }
+.strength-page .strength-calendar-day{ border-color:var(--sb-hairline); border-radius:var(--sb-r-sm,12px); background:rgba(236,230,212,.025); }
 .strength-page .strength-calendar-day.outside{ border-color:transparent; background:none; }
 .strength-page .strength-calendar-day.selected{ border-color:rgba(214,185,142,.55); background:rgba(214,185,142,.08); }
 .strength-page .strength-calendar-day.today .strength-calendar-number{ background:var(--sb-lens-bg); color:var(--on-primary); }
@@ -3645,7 +3645,7 @@ html body .strength-page .strength-hero .sb-eyebrow{ display:none; }
 .strength-page .strength-library-search,
 .strength-page .strength-library-select{
     min-height:48px;
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     background:var(--sb-inset-bg);
     border:1px solid var(--sb-inset-border);
     box-shadow:var(--sb-inset-shadow);
@@ -3656,7 +3656,7 @@ html body .strength-page .strength-hero .sb-eyebrow{ display:none; }
 .strength-page .strength-library-results-bar span{ font:600 12px/1.4 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); }
 .strength-page .strength-library-card{
     padding:18px;
-    border-radius:24px;
+    border-radius:var(--sb-r-xl,24px);
     background:var(--sb-bubble-dark-bg);
     border:1px solid var(--sb-bubble-dark-border);
     box-shadow:var(--sb-bubble-dark-shadow);

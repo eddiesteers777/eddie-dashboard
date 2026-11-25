@@ -15,7 +15,7 @@
     padding:16px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     color:var(--text);
     text-decoration:none;
 }
@@ -68,7 +68,7 @@ a.updates-item:hover{ border-color:var(--primary); }
 .updates-page .updates-feed{
     gap:0;
     padding:2px 18px;
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
     background:var(--sb-bubble-dark-bg);
     border:1px solid var(--sb-bubble-dark-border);
     box-shadow:var(--sb-bubble-dark-shadow);
@@ -111,6 +111,6 @@ a.updates-item:hover{ border-color:var(--primary); }
 .updates-page .updates-new{ padding:2px 9px; background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); font:600 11px/1.5 var(--font-mono); letter-spacing:.08em; }
 .updates-page .updates-text{ color:var(--text); font-size:15.5px; line-height:1.55; }
 
-.updates-open{ display:inline-flex; align-items:center; min-height:44px; margin-top:6px; padding:0 14px; border-radius:6px; background:var(--primary); color:var(--on-primary); font-weight:600; text-decoration:none; }
+.updates-open{ display:inline-flex; align-items:center; min-height:44px; margin-top:6px; padding:0 14px; border-radius:var(--sb-r-xs,6px); background:var(--primary); color:var(--on-primary); font-weight:600; text-decoration:none; }
 /* Empty feed: the "not connected" card carries its own glass, so the feed's frame steps aside. */
 .updates-page .updates-feed.is-bare{ padding:0; background:none; border:0; box-shadow:none; }

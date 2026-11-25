@@ -39,7 +39,7 @@
     margin-top:18px;
     padding:13px 15px;
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:rgba(255,255,255,.025);
     color:var(--text-secondary);
     font-size:.85rem;
@@ -65,7 +65,7 @@
     min-height:112px;
     padding:17px;
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     background:var(--surface-light);
 }
 
@@ -113,7 +113,7 @@
     align-items:center;
     padding:14px 15px;
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:rgba(255,255,255,.02);
 }
 
@@ -135,7 +135,7 @@
 .coros-empty-state{
     padding:18px;
     border:1px dashed var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     color:var(--muted);
     text-align:center;
     font-size:.82rem;

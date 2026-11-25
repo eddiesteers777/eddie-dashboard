@@ -300,7 +300,7 @@ function managerRowsHtml(items) {
 function managerHtml(items) {
     return [
         '<dialog class="sb-dialog ft-manager-dialog"><div class="sb-dialog-form">',
-        '<h2 class="sb-dialog-title">Featured Runs</h2>',
+        '<h2 class="sb-dialog-title">Featured runs</h2>',
         '<p class="clients-card-note">Southbound auto-picks one Long Run and one Speed Work session. Use the selector to override any recent run.</p>',
         '<div class="ft-manager-list">', managerRowsHtml(items), '</div>',
         '<div class="sb-dialog-actions"><button type="button" class="sb-btn sb-btn-tertiary" data-ft-close>Done</button></div>',

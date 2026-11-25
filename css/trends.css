@@ -35,7 +35,7 @@
 
 /* Key workouts */
 .tr-works{ list-style:none; margin:14px 0 0; padding:0; display:grid; gap:10px; }
-.tr-work{ padding:12px 14px; border:1px solid var(--border); border-left:3px solid var(--border); border-radius:12px; background:rgba(255,255,255,.02); }
+.tr-work{ padding:12px 14px; border:1px solid var(--border); border-left:3px solid var(--border); border-radius:var(--sb-r-sm,12px); background:rgba(255,255,255,.02); }
 .tr-work.good{ border-left-color:var(--good); }
 .tr-work.ok{ border-left-color:var(--primary); }
 .tr-work.off{ border-left-color:var(--bad); }
@@ -66,7 +66,7 @@
 
 /* Body minis */
 .tr-minis{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-top:14px; }
-.tr-mini{ padding:12px; border:1px solid var(--border); border-radius:12px; background:rgba(255,255,255,.02); }
+.tr-mini{ padding:12px; border:1px solid var(--border); border-radius:var(--sb-r-sm,12px); background:rgba(255,255,255,.02); }
 .tr-mini-top{ display:flex; justify-content:space-between; align-items:baseline; }
 .tr-mini-top span{ color:var(--muted); font-size:.82rem; }
 .tr-mini-top strong{ color:var(--text); }

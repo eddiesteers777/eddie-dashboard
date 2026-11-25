@@ -19,7 +19,7 @@
 .checkin-select-wrap select{
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     color:var(--text);
     padding:9px 10px;
     font:13.5px/1.4 var(--font-body);
@@ -61,7 +61,7 @@
     resize:vertical;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-md,12px);
     color:var(--text);
     padding:12px 14px;
     font:13.5px/1.5 var(--font-body);
@@ -78,7 +78,7 @@
 .checkin-row{
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     padding:16px;
 }
 .checkin-row-head{
@@ -153,7 +153,7 @@
     resize:vertical;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-md,12px);
     color:var(--text);
     padding:10px 12px;
     font:13.5px/1.4 var(--font-body);
@@ -176,7 +176,7 @@
     justify-content:center;
     min-height:44px;
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:var(--surface-light);
     color:var(--text-secondary);
     font-weight:800;
@@ -192,7 +192,7 @@
     padding:10px 12px;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-md,12px);
     color:var(--text);
     font:14.5px/1.5 var(--font-body);
     resize:vertical;
@@ -251,13 +251,13 @@
 .checkin-page .checkin-field textarea,
 .checkin-page #checkinPainNote,
 .checkin-page #checkinNotesInput,
-.checkin-page .checkin-review-form textarea{ padding:12px 14px; border-radius:16px; background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); box-shadow:var(--sb-inset-shadow); font-size:16px; }
+.checkin-page .checkin-review-form textarea{ padding:12px 14px; border-radius:var(--sb-r-lg,16px); background:var(--sb-inset-bg); border:1px solid var(--sb-inset-border); box-shadow:var(--sb-inset-shadow); font-size:16px; }
 
 /* History: a dark bubble per week. */
 .checkin-page .checkin-history-list{ gap:12px; }
 .checkin-page .checkin-row{
     padding:18px;
-    border-radius:24px;
+    border-radius:var(--sb-r-xl,24px);
     background:var(--sb-bubble-dark-bg);
     border:1px solid var(--sb-bubble-dark-border);
     box-shadow:var(--sb-bubble-dark-shadow);

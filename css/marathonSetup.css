@@ -1,12 +1,12 @@
 /* The marathon plan screen (js/marathonSetup.js): plan first, setup on its own view.
    Foggy blue app look; mist is the action colour, gold marks down weeks, the race and warnings. */
-.ms-dialog{ width:min(1000px, calc(100vw - 24px)); max-height:calc(100dvh - 24px); overflow-y:auto; border-radius:14px; }
+.ms-dialog{ width:min(1000px, calc(100vw - 24px)); max-height:calc(100dvh - 24px); overflow-y:auto; border-radius:var(--sb-r-md,14px); }
 .ms-dialog [hidden]{ display:none !important; }
 .ms-wrap{ display:flex; flex-direction:column; gap:12px; padding:16px; }
 .ms-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
 .ms-head h2{ font-family:var(--font-display); font-weight:900; font-size:30px; line-height:.95; text-transform:uppercase; margin:6px 0 0; }
 .ms-kick{ font:600 11px var(--font-mono); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
-.ms-panel, .ms-setup{ background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02)); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+.ms-panel, .ms-setup{ background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02)); border:1px solid var(--border); border-radius:var(--sb-r-sm,12px); padding:14px 16px; }
 .ms-panel h3{ font-family:var(--font-display); font-weight:800; font-size:20px; text-transform:uppercase; margin:0 0 8px; }
 .ms-setup{ display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
 .ms-setup p{ margin:4px 0 0; font-size:15px; line-height:1.4; flex:1 1 200px; }
@@ -30,7 +30,7 @@
 .ms-wk summary::-webkit-details-marker{ display:none; }
 .ms-n{ font:600 11px var(--font-mono); color:var(--muted); width:46px; flex:none; }
 .ms-mi{ margin-left:auto; font:600 13px var(--font-mono); color:var(--primary-light); }
-.ms-tag{ font:600 10px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; border:1px solid var(--border); border-radius:4px; padding:2px 6px; color:var(--muted); white-space:nowrap; }
+.ms-tag{ font:600 10px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; border:1px solid var(--border); border-radius:var(--sb-r-xs,4px); padding:2px 6px; color:var(--muted); white-space:nowrap; }
 .ms-tag.is-down{ color:var(--gold-light); border-color:rgba(var(--sb-gold-rgb),.4); }
 .ms-day{ display:flex; gap:10px; padding:6px 0 6px 56px; font-size:14px; line-height:1.35; border-top:1px dashed rgba(var(--sb-mist-rgb),.06); }
 .ms-d{ width:34px; flex:none; font:600 11px var(--font-mono); color:var(--muted); padding-top:2px; }
@@ -55,7 +55,7 @@
 .ms-days div{ display:flex; gap:6px; flex-wrap:wrap; margin-top:5px; }
 .ms-days label{ position:relative; }
 .ms-days input{ position:absolute; opacity:0; inset:0; margin:0; cursor:pointer; }
-.ms-days span{ min-width:44px; min-height:44px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:8px; font-size:14px; }
+.ms-days span{ min-width:44px; min-height:44px; box-sizing:border-box; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:var(--sb-r-sm,8px); font-size:14px; }
 .ms-days input:checked + span{ background:rgba(var(--sb-accent-rgb),.16); border-color:var(--primary); color:var(--primary-light); }
 .ms-days input:focus-visible + span{ outline:2px solid var(--primary); outline-offset:2px; }
 .ms-more summary{ cursor:pointer; min-height:44px; display:flex; align-items:center; font:600 12px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--primary-light); }
@@ -71,7 +71,7 @@
     .ms-day{ padding-left:12px; }
 }
 @media (prefers-reduced-motion:reduce){ .ms-dialog[open]{ animation:none; } }
-.ms-coros{ margin:0 0 12px; padding:10px 12px; border-radius:10px; font-size:14px; color:var(--text); background:color-mix(in srgb,var(--primary) 12%,transparent); border:1px solid color-mix(in srgb,var(--primary) 30%,transparent); }
+.ms-coros{ margin:0 0 12px; padding:10px 12px; border-radius:var(--sb-r-sm,10px); font-size:14px; color:var(--text); background:color-mix(in srgb,var(--primary) 12%,transparent); border:1px solid color-mix(in srgb,var(--primary) 30%,transparent); }
 
 /* Race plan | Recovery switch and the recovery rules (js/recoverySetup.js) */
 .ms-switch{ display:flex; border:1px solid var(--border); border-radius:var(--radius-pill); overflow:hidden; margin:2px 0 12px; }

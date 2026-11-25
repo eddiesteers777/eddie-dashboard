@@ -57,15 +57,15 @@
     gap:12px;
     padding:12px 14px;
     background:color-mix(in srgb, var(--text) 4%, transparent);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
 }
 .pg-rows li > div{ display:flex; flex-direction:column; gap:3px; min-width:0; }
 .pg-rows strong{ color:var(--text); font-weight:600; }
 .pg-rows small{ color:var(--muted); font-size:13px; white-space:pre-line; }
 .pg-rows .pg-tag{ color:var(--primary); font-size:13px; white-space:nowrap; }
 
-.pg-bar{ height:10px; border-radius:6px; background:color-mix(in srgb, var(--text) 8%, transparent); overflow:hidden; margin:12px 0 6px; }
-.pg-bar span{ display:block; height:100%; background:var(--primary); border-radius:6px; }
+.pg-bar{ height:10px; border-radius:var(--sb-r-xs,6px); background:color-mix(in srgb, var(--text) 8%, transparent); overflow:hidden; margin:12px 0 6px; }
+.pg-bar span{ display:block; height:100%; background:var(--primary); border-radius:var(--sb-r-xs,6px); }
 
 @media (max-width:600px){
     .pg-metrics{ grid-template-columns:1fr 1fr; gap:10px; }
@@ -126,7 +126,7 @@
 .pg-page .pg-card{
     margin:16px 0 0;
     padding:18px;
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
     background:var(--sb-bubble-dark-bg);
     border:1px solid var(--sb-bubble-dark-border);
     box-shadow:var(--sb-bubble-dark-shadow);

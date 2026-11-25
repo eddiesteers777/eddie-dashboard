@@ -95,7 +95,7 @@
     gap:4px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     padding:4px;
     margin-bottom:22px;
     width:fit-content;
@@ -108,7 +108,7 @@
     border:none;
     color:var(--text-secondary);
     padding:9px 20px;
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     font-size:13.5px;
     font-weight:700;
     font-family:inherit;
@@ -147,7 +147,7 @@
     color:var(--text-secondary);
     width:34px;
     height:34px;
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     cursor:pointer;
     font-size:14px;
 
@@ -164,7 +164,7 @@
 
     padding:9px 16px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     background:transparent;
     color:var(--text-secondary);
     cursor:pointer;
@@ -261,7 +261,7 @@
     align-items:center;
     gap:14px;
     background:var(--surface-light);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     padding:14px 16px;
     cursor:pointer;
     transition:.15s;
@@ -282,7 +282,7 @@
 
     width:26px;
     height:26px;
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
     border:1px solid var(--border);
     background:var(--surface);
     flex-shrink:0;
@@ -370,7 +370,7 @@
 .habits-cal-cell{
 
     aspect-ratio:1;
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
     border:1px solid var(--border);
     background:var(--surface-light);
     cursor:pointer;
@@ -447,7 +447,7 @@
     justify-content:space-between;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     padding:12px 16px;
 
 }
@@ -469,7 +469,7 @@
     font-size:16px;
     cursor:pointer;
     padding:4px 8px;
-    border-radius:8px;
+    border-radius:var(--sb-r-md,8px);
     transition:.15s;
 
 }
@@ -494,7 +494,7 @@
     background:var(--surface-light);
     border:1px solid var(--border);
     color:var(--text);
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     padding:11px 14px;
     font-size:14px;
     font-family:inherit;
@@ -549,10 +549,10 @@
     margin-bottom:18px;
     background:var(--sb-inset-bg);
     border:1px solid var(--border);
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
 }
-.habits-page .habits-view-btn{ min-height:44px; padding:0 22px; border-radius:14px; font:650 14px/1 var(--font-body); }
+.habits-page .habits-view-btn{ min-height:44px; padding:0 22px; border-radius:var(--sb-r-md,14px); font:650 14px/1 var(--font-body); }
 .habits-page .habits-view-btn:hover{ color:var(--text); }
 .habits-page .habits-view-btn.active{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
 
@@ -581,7 +581,7 @@
 .habits-page .habits-checklist-card,
 .habits-page [data-habits-panel="calendar"].active,
 .habits-page .habits-manage-list{
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
     background:var(--sb-bubble-dark-bg);
     border:1px solid var(--sb-bubble-dark-border);
     box-shadow:var(--sb-bubble-dark-shadow);
@@ -611,7 +611,7 @@
 .habits-page [data-habits-panel="calendar"].active{ padding:16px 18px 18px; }
 .habits-page .habits-cal-grid-header span{ font:600 11px/1.3 var(--font-mono); letter-spacing:.08em; color:var(--text-secondary); }
 .habits-page .habits-cal-grid{ gap:5px; margin-bottom:16px; }
-.habits-page .habits-cal-cell{ border-radius:12px; border-color:var(--sb-hairline); background:rgba(236,230,212,.03); font-size:12.5px; color:var(--text-secondary); }
+.habits-page .habits-cal-cell{ border-radius:var(--sb-r-sm,12px); border-color:var(--sb-hairline); background:rgba(236,230,212,.03); font-size:12.5px; color:var(--text-secondary); }
 .habits-page .habits-cal-cell.empty{ background:none; border-color:transparent; }
 .habits-page .habits-cal-cell.today{ border-color:var(--primary); box-shadow:0 0 0 1px var(--primary); color:var(--text); }
 .habits-page .habits-cal-legend{ gap:8px 16px; padding-top:14px; border-top:1px solid var(--sb-hairline); font:600 11.5px/1.4 var(--font-mono); letter-spacing:.06em; text-transform:uppercase; }
@@ -628,7 +628,7 @@
 .habits-page .habits-add-row input{
     min-width:0;
     min-height:48px;
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     background:var(--sb-inset-bg);
     border:1px solid var(--sb-inset-border);
     box-shadow:var(--sb-inset-shadow);
@@ -644,7 +644,7 @@
     .habits-page .habits-hero-stat:first-child{ padding-left:0; }
     .habits-page .habits-view-toggle{ width:100%; }
     .habits-page .habits-view-btn{ flex:1 1 0; padding:0 6px; }
-    .habits-page .habits-cal-cell{ font-size:12px; border-radius:10px; }
+    .habits-page .habits-cal-cell{ font-size:12px; border-radius:var(--sb-r-sm,10px); }
     .habits-page .habits-checklist-card{ padding:16px 16px 4px; }
     .habits-page [data-habits-panel="calendar"].active{ padding:14px 12px 16px; }
 }
@@ -674,7 +674,7 @@
     min-height:64px;
     padding:4px 0;
     border:0;
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:none;
     color:var(--text-secondary);
     cursor:pointer;
@@ -691,7 +691,7 @@
     width:min(100%, 34px);
     height:34px;
     overflow:hidden;
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
     background:rgba(236,230,212,.07);
     border:1px solid var(--sb-hairline);
 }

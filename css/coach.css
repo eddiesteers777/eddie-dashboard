@@ -61,7 +61,7 @@
     color:var(--text);
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     padding:14px 16px;
     transition:background-color .15s ease,border-color .15s ease;
 }
@@ -73,7 +73,7 @@
     flex-shrink:0;
     width:40px;
     height:40px;
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -107,7 +107,7 @@
     gap:12px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     padding:14px 16px;
 }
 .coach-setup-row div{
@@ -162,7 +162,7 @@
 .coach-inq-row{
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     padding:16px 18px;
     flex-shrink:0;
 }
@@ -210,7 +210,7 @@
     display:inline-flex;
     align-items:center;
     padding:8px 14px;
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     border:1px solid var(--border);
     background:var(--surface-light);
     color:var(--text);
@@ -223,7 +223,7 @@
 .coach-inq-empty{
     background:var(--surface);
     border:1px dashed var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     padding:18px;
     color:var(--text-secondary);
     font-size:14px;
@@ -284,7 +284,7 @@
     padding:12px 14px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     color:var(--text);
     text-decoration:none;
     font-size:14.5px;
@@ -342,7 +342,7 @@
     gap:5px;
     padding:0 12px;
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     background:transparent;
     color:var(--text-secondary);
     font:600 12.5px var(--font-body);
@@ -388,7 +388,7 @@
     padding:10px 14px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     color:var(--text);
     text-decoration:none;
     font-size:14.5px;
@@ -427,7 +427,7 @@
     padding:10px 14px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     color:var(--text);
     text-decoration:none;
 }
@@ -627,7 +627,7 @@
 .coach-seg-btn em{ font:600 11px var(--font-mono); font-style:normal; opacity:.8; }
 .coach-seg-btn[aria-selected="true"]{ background:var(--sb-lens-bg); box-shadow:var(--sb-lens-shadow); color:var(--on-primary); }
 
-.coach-queue{ padding:14px 14px 12px; background:var(--sb-bubble-dark-bg); border-color:var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); border-radius:20px; }
+.coach-queue{ padding:14px 14px 12px; background:var(--sb-bubble-dark-bg); border-color:var(--sb-bubble-dark-border); box-shadow:var(--sb-bubble-dark-shadow); border-radius:var(--sb-r-lg,20px); }
 .coach-queue-row{ position:relative; display:block; overflow:hidden; border-top:1px solid var(--sb-hairline); }
 .coach-queue-group > .coach-queue-row:first-child{ border-top:0; }
 .coach-queue-group .coach-queue-row:last-child{ border-bottom:0; }
@@ -695,7 +695,7 @@
 /* Session plans card */
 .coach-plans{ margin:18px 0; }
 .coach-plans-list{ display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
-.coach-plan{ border:1px solid rgba(236,230,212,.16); border-radius:12px; padding:16px; display:grid; gap:6px; align-content:start; background:var(--surface); }
+.coach-plan{ border:1px solid rgba(236,230,212,.16); border-radius:var(--sb-r-sm,12px); padding:16px; display:grid; gap:6px; align-content:start; background:var(--surface); }
 .coach-plan.is-today{ border-color:var(--primary); }
 .coach-plan-top{ display:flex; justify-content:space-between; gap:8px; font:600 11px var(--font-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--primary); }
 .coach-plan h3{ font-family:var(--font-display); text-transform:uppercase; font-size:22px; margin:0; }
@@ -766,5 +766,5 @@ body[data-coach-scope="online"] .coach-week,
 body[data-coach-scope="online"] #inquiries,
 body[data-coach-scope="soccer"] #inquiries{ display:none !important; }
 
-.coach-soccer-link{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0 0 14px; padding:14px 16px; min-height:56px; border-radius:12px; border:1px solid var(--border); background:var(--sb-bubble-raised-bg); color:var(--text); text-decoration:none; }
+.coach-soccer-link{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin:0 0 14px; padding:14px 16px; min-height:56px; border-radius:var(--sb-r-sm,12px); border:1px solid var(--border); background:var(--sb-bubble-raised-bg); color:var(--text); text-decoration:none; }
 .coach-soccer-link span{ color:var(--muted); font-size:13px; }

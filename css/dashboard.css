@@ -72,7 +72,7 @@
     align-items:center;
     gap:14px;
     background:var(--surface-light);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     padding:14px 16px;
     text-decoration:none;
     color:inherit;
@@ -95,7 +95,7 @@
     justify-content:center;
     width:38px;
     height:38px;
-    border-radius:11px;
+    border-radius:var(--sb-r-sm,11px);
     background:color-mix(in srgb, currentColor 16%, transparent);
 
 }
@@ -383,7 +383,7 @@
     .eos-today-item{
         gap:10px;
         padding:10px 12px;
-        border-radius:12px;
+        border-radius:var(--sb-r-sm,12px);
     }
 
     .eos-today-item-run{
@@ -418,7 +418,7 @@
 
     .stat-card{
         padding:12px 10px;
-        border-radius:14px;
+        border-radius:var(--sb-r-md,14px);
     }
 
     .stat-card:hover{
@@ -552,7 +552,7 @@
     align-items:flex-start;
     gap:14px;
     background:var(--surface-light);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     padding:14px 16px;
     text-decoration:none;
     color:inherit;
@@ -568,7 +568,7 @@
     justify-content:center;
     width:38px;
     height:38px;
-    border-radius:11px;
+    border-radius:var(--sb-r-sm,11px);
     background:color-mix(in srgb, currentColor 16%, transparent);
 }
 
@@ -775,7 +775,7 @@
     gap:16px;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     padding:14px 15px;
     min-width:0;
 }
@@ -880,7 +880,7 @@
     gap:14px;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     padding:12px 14px;
 }
 
@@ -907,7 +907,7 @@
     min-width:125px;
     padding:8px 10px;
     border:1px solid var(--border);
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     background:var(--surface);
     color:var(--text);
     font:600 12px/1 inherit;
@@ -963,7 +963,7 @@
     box-shadow:0 18px 42px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.025);
 }
 .stats .stat-card{
-    border-radius:20px;background:linear-gradient(145deg,rgba(27,46,34,.96),rgba(13,26,19,.98));
+    border-radius:var(--sb-r-lg,20px);background:linear-gradient(145deg,rgba(27,46,34,.96),rgba(13,26,19,.98));
     border-color:rgba(235,232,220,.085);
     box-shadow:0 16px 38px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.025);
 }

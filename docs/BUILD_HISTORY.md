@@ -969,3 +969,6 @@ Step 5 of the Anchor Board look plan (Eddie: "Yes" to starting it). The computer
 Eddie's phone screenshot of the drawer: the Southbound name was underlined, the search bar had the old glass shine, and his photo
 stretched across the account row with the name cut off. The computer-only sidebar rules in css/style.css did that styling, so
 css/skin.css part 4 now does it at every width: wordmark type, no shine or blur on the drawer's buttons, a 40px photo, the name cut with an ellipsis.
+
+## 2026-11-25: Type and shape (branch `app-type-shape`, no rules change)
+Step 6 of the Anchor Board look plan (Eddie: "Yes" to starting it). One corner scale for the app (8, 12, 14, 18, 24px and round), as `--sb-r-*` tokens defined only under `html.al-on`; about 715 corners in about 50 app stylesheets now read `var(--sb-r-*, old px)`, so public pages and the Playbook keep their corners. Card titles moved from Big Shoulders capitals to the text font at 17px in sentence case, sheet titles to 20px; Big Shoulders stays on page titles and big numbers. Title Case headings in the app pages and a few scripts rewritten in sentence case. New `tests/typeShape.test.mjs`. Not checked in a browser or on a phone when built; headings that scripts build from data may still be in Title Case.

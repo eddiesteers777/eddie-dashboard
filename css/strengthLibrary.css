@@ -8,7 +8,7 @@
     margin:0 0 24px;
     padding:20px;
     border:1px solid var(--border);
-    border-radius:20px;
+    border-radius:var(--sb-r-lg,20px);
     background:var(--surface);
 }
 
@@ -50,7 +50,7 @@
 .strength-library-header-btn{
     padding:9px 12px;
     border:1px solid var(--border);
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     background:transparent;
     color:var(--text-secondary);
     cursor:pointer;
@@ -76,7 +76,7 @@
 .strength-library-filter-btn{
     padding:8px 11px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     background:transparent;
     color:var(--muted);
     cursor:pointer;
@@ -103,7 +103,7 @@
     min-width:0;
     padding:9px 10px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     background:var(--surface-light);
     color:var(--text);
     outline:none;
@@ -141,7 +141,7 @@
     min-width:0;
     padding:15px;
     border:1px solid var(--border);
-    border-radius:15px;
+    border-radius:var(--sb-r-md,15px);
     background:rgba(255,255,255,.018);
     transition:.15s;
 }
@@ -190,7 +190,7 @@
     width:27px;
     height:27px;
     border:1px solid var(--border);
-    border-radius:8px;
+    border-radius:var(--sb-r-sm,8px);
     background:transparent;
     color:var(--muted);
     cursor:pointer;
@@ -244,7 +244,7 @@
     flex:1;
     padding:8px 9px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     background:transparent;
     color:var(--text-secondary);
     cursor:pointer;
@@ -292,7 +292,7 @@
     flex:1;
     padding:7px 8px;
     border:1px solid var(--border);
-    border-radius:8px;
+    border-radius:var(--sb-r-md,8px);
     background:var(--surface-light);
     color:var(--text-secondary);
     font:inherit;
@@ -302,7 +302,7 @@
 .strength-library-delete{
     padding:7px 8px;
     border:1px solid color-mix(in srgb, var(--red) 20%, transparent);
-    border-radius:8px;
+    border-radius:var(--sb-r-sm,8px);
     background:transparent;
     color:var(--red);
     cursor:pointer;
@@ -315,7 +315,7 @@
     grid-column:1/-1;
     padding:35px 20px;
     border:1px dashed var(--border);
-    border-radius:13px;
+    border-radius:var(--sb-r-md,13px);
     text-align:center;
     color:var(--muted);
 }
@@ -356,7 +356,7 @@
     flex-direction:column;
     background:linear-gradient(160deg,rgba(26,42,33,.99),rgba(14,26,20,.99));
     border:1px solid var(--border);
-    border-radius:22px;
+    border-radius:var(--sb-r-xl,22px);
     box-shadow:0 30px 70px rgba(0,0,0,.5);
 }
 
@@ -408,7 +408,7 @@
 .strength-library-preview-group{
     padding:10px 12px;
     border:1px solid var(--border);
-    border-radius:11px;
+    border-radius:var(--sb-r-sm,11px);
     background:rgba(255,255,255,.018);
 }
 
@@ -458,7 +458,7 @@
     width:100%;
     padding:9px 10px;
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-md,9px);
     background:var(--surface-light);
     color:var(--text);
     outline:none;

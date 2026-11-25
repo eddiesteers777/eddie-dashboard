@@ -54,7 +54,7 @@ html{
 
     border:1px solid var(--border);
 
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
 
     padding:32px;
 
@@ -181,7 +181,7 @@ html{
 
     border:1px solid rgba(255,255,255,.06);
 
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
 
     padding:20px;
 
@@ -243,7 +243,7 @@ html{
 
     color:white;
 
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
 
     padding:10px 12px;
 
@@ -333,7 +333,7 @@ html{
 
     color:var(--muted);
 
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
 
     padding:10px 12px;
 
@@ -429,7 +429,7 @@ html{
 
     border:1px solid rgba(201,173,132,.30);
 
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
 
     padding:32px;
 
@@ -509,7 +509,7 @@ html{
 
     border:1px solid rgba(255,255,255,.08);
 
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
 
     padding:12px 18px;
 
@@ -583,7 +583,7 @@ html{
 
     border:1px solid rgba(255,255,255,.06);
 
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
 
     padding:16px;
 
@@ -757,7 +757,7 @@ html{
     gap:6px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     padding:5px;
     margin-bottom:24px;
     width:fit-content;
@@ -773,7 +773,7 @@ html{
     border:none;
     color:var(--text-secondary);
     padding:10px 18px;
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
     font-size:13.5px;
     font-weight:700;
     font-family:inherit;
@@ -822,7 +822,7 @@ html{
     background:rgba(255,255,255,.03);
     border:1px solid rgba(255,255,255,.06);
     color:var(--text);
-    border-radius:12px;
+    border-radius:var(--sb-r-md,12px);
     padding:12px 14px;
     font-size:14px;
     font-family:inherit;
@@ -851,7 +851,7 @@ html{
     background:rgba(255,255,255,.03);
     border:1px solid rgba(255,255,255,.06);
     color:var(--text);
-    border-radius:10px;
+    border-radius:var(--sb-r-md,10px);
     padding:11px 10px;
     font-size:15px;
     font-family:var(--font-mono);
@@ -1034,13 +1034,13 @@ html{
     margin-bottom:18px;
     background:var(--sb-inset-bg);
     border:1px solid var(--border);
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
 }
 #pc-root .pc-tool-tab{
     min-height:44px;
     padding:0 18px;
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     font:650 14px/1.2 var(--font-body);
     color:var(--text-secondary);
 }
@@ -1050,7 +1050,7 @@ html{
 /* Each form: one dark bubble. The answers: the raised bubble. */
 #pc-root .pc-card{
     padding:22px;
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
     background:var(--sb-bubble-dark-bg);
     border:1px solid var(--sb-bubble-dark-border);
     box-shadow:var(--sb-bubble-dark-shadow);
@@ -1059,7 +1059,7 @@ html{
 #pc-root #rs-result-card,
 #pc-root #tz-result-card{
     padding:22px;
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
     background:var(--sb-bubble-raised-bg);
     border:1px solid var(--sb-bubble-raised-border);
     box-shadow:var(--sb-bubble-raised-shadow);
@@ -1094,7 +1094,7 @@ html{
 #pc-root .pc-select,
 #pc-root .pc-preset-select{
     min-height:48px;
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     background:var(--sb-inset-bg);
     border:1px solid var(--sb-inset-border);
     box-shadow:var(--sb-inset-shadow);
@@ -1189,7 +1189,7 @@ html{
 #pc-root.pc-has-menu .pc-tool-tabs{ display:none; }
 #pc-root .pc-tool-menu{
     display:flex; align-items:center; gap:12px; min-height:52px; margin:0 0 14px; padding:0 14px 0 16px; position:relative;
-    border-radius:18px; border:1px solid rgba(214,228,240,.2);
+    border-radius:var(--sb-r-lg,18px); border:1px solid rgba(214,228,240,.2);
     background:linear-gradient(180deg,rgba(42,62,82,.8),rgba(24,36,48,.72));
     box-shadow:inset 0 1px 0 rgba(214,228,240,.16),0 12px 30px rgba(0,0,0,.36);
 }
@@ -1199,5 +1199,5 @@ html{
     appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:22px;
 }
 #pc-root .pc-tool-menu::after{ content:"\25BE"; position:absolute; right:16px; color:var(--text-secondary); pointer-events:none; }
-#pc-root .pc-tool-menu select:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; border-radius:8px; }
+#pc-root .pc-tool-menu select:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; border-radius:var(--sb-r-md,8px); }
 #pc-root .pc-tool-menu option{ background:#1D2A36; color:#E9EEF2; }

@@ -1050,7 +1050,7 @@ function renderSavedPlans() {
         <div class="race-plan-manager-toolbar">
             <div>
                 <div class="race-plan-manager-kicker">PLAN LIBRARY</div>
-                <h3>Your Race Plans</h3>
+                <h3>Your race plans</h3>
                 <p>Manage active training blocks, paused plans, drafts, and archived history.</p>
             </div>
             <button type="button" id="racePlanNewPlanBtn" class="race-plan-primary-btn">+ New Race Plan</button>

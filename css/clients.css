@@ -101,7 +101,7 @@
     min-width:0;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-md,12px);
     color:var(--text);
     padding:11px 14px;
     font-size:15px;
@@ -196,7 +196,7 @@
     padding:12px 14px;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
 }
 #codeValue{
     flex:1;
@@ -228,7 +228,7 @@
     padding:12px 14px;
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
 }
 .clients-row-avatar{
     flex-shrink:0;
@@ -289,7 +289,7 @@
 .clients-app{
     margin-top:10px;
     padding:10px 12px;
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
     border:1px solid var(--border);
     border-left:3px solid var(--primary);
     background:var(--surface-light);
@@ -328,7 +328,7 @@
     font-size:12.5px;
     color:var(--text-secondary);
 }
-.clients-app-match select{max-width:100%;min-height:40px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface-light);color:var(--text);font-size:14px;}
+.clients-app-match select{max-width:100%;min-height:40px;padding:8px 10px;border-radius:var(--sb-r-md,10px);border:1px solid var(--border);background:var(--surface-light);color:var(--text);font-size:14px;}
 .clients-service-list{
     display:flex;
     flex-wrap:wrap;
@@ -387,7 +387,7 @@
 }
 @media(min-width:720px){
     #planEditorOverlay{align-items:center;padding:20px;}
-    .clients-editor{border-radius:22px;max-height:88vh;}
+    .clients-editor{border-radius:var(--sb-r-xl,22px);max-height:88vh;}
 }
 
 .clients-editor-head{
@@ -459,7 +459,7 @@
 .clients-week{
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     padding:14px;
 }
 .clients-week-head{
@@ -491,7 +491,7 @@
 .clients-day-session{
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:9px;
+    border-radius:var(--sb-r-sm,9px);
     color:var(--text);
     padding:7px 8px;
     font-size:12.5px;
@@ -517,7 +517,7 @@
 .clients-note{
     background:var(--surface);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     padding:10px 12px;
 }
 .clients-note-author{
@@ -544,7 +544,7 @@
     resize:vertical;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-md,12px);
     color:var(--text);
     padding:10px 12px;
     font:13.5px/1.4 var(--font-body);
@@ -587,7 +587,7 @@
     padding:11px 14px;
     background:var(--surface-light);
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-md,12px);
     color:var(--text);
     font:14px var(--font-body);
 }
@@ -668,7 +668,7 @@
 
 /* ---- Strength planned vs actual (js/strengthSession.js: client workout page + coach hub) ---- */
 
-.st-table{ display:flex; flex-direction:column; margin-bottom:10px; border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.st-table{ display:flex; flex-direction:column; margin-bottom:10px; border:1px solid var(--border); border-radius:var(--sb-r-sm,12px); overflow:hidden; }
 .st-row{ display:grid; grid-template-columns:1.3fr 1fr 1.3fr; gap:8px; padding:9px 12px; border-top:1px solid var(--border); color:var(--text); font-size:14px; }
 .st-row b{ color:var(--primary); }
 .st-row-head{ border-top:0; background:var(--surface-light); color:var(--muted); font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
@@ -691,7 +691,7 @@
 .ck-score b{ color:var(--text); }
 .ck-score.is-low{ border-color:color-mix(in srgb, var(--amber) 60%, transparent); background:var(--warning-bg); }
 .ck-score.is-low b{ color:var(--warning); }
-.ck-pain{ display:flex; align-items:flex-start; gap:8px; margin:8px 0; padding:9px 12px; background:var(--warning-bg); border-radius:12px; color:var(--text); font-size:14px; }
+.ck-pain{ display:flex; align-items:flex-start; gap:8px; margin:8px 0; padding:9px 12px; background:var(--warning-bg); border-radius:var(--sb-r-sm,12px); color:var(--text); font-size:14px; }
 .ck-pain .ui-icon{ color:var(--warning); margin-top:2px; }
 .ck-said{ margin:8px 0 0; }
 .ck-said span{ color:var(--muted); font-size:11.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
@@ -718,7 +718,7 @@
 .cr-reasons input:checked + span{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
 .cr-reasons input:focus-visible + span{ box-shadow:var(--focus-ring); }
 .cr-list{ display:flex; flex-direction:column; gap:10px; }
-.cr-item{ padding:12px 14px; border:1px solid var(--border); border-radius:14px; }
+.cr-item{ padding:12px 14px; border:1px solid var(--border); border-radius:var(--sb-r-md,14px); }
 .cr-item.is-open{ border-color:rgba(201,173,132,.45); }
 .cr-item-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
 .cr-item-head strong{ color:var(--text); font-size:15px; }
@@ -746,7 +746,7 @@
 :is(.checkin-page, .schedule-page, .messages-page, .updates-page) .clients-card{
     padding:18px;
     margin-bottom:16px;
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
     background:var(--sb-bubble-dark-bg);
     border:1px solid var(--sb-bubble-dark-border);
     box-shadow:var(--sb-bubble-dark-shadow);
@@ -755,7 +755,7 @@
 :is(.checkin-page, .schedule-page, .messages-page, .updates-page) .clients-card-note{ font-size:14px; color:var(--text-secondary); }
 :is(.checkin-page, .schedule-page, .messages-page, .updates-page) .clients-section-title{ margin:28px 0 12px; font:650 18px/1.25 var(--font-body); letter-spacing:0; text-transform:none; color:var(--text); }
 :is(.checkin-page, .schedule-page, .messages-page, .updates-page) .clients-empty{
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
     background:var(--sb-bubble-dark-bg);
     border:1px dashed var(--sb-glass-border);
     box-shadow:none;
@@ -766,10 +766,10 @@
     gap:2px;
     background:var(--sb-inset-bg);
     border:1px solid var(--border);
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     box-shadow:inset 0 1px 2px rgba(0,0,0,.25);
 }
-:is(.checkin-page, .schedule-page, .messages-page, .updates-page) .clients-tab{ min-height:44px; padding:0 18px; border-radius:14px; font:650 14px/1 var(--font-body); }
+:is(.checkin-page, .schedule-page, .messages-page, .updates-page) .clients-tab{ min-height:44px; padding:0 18px; border-radius:var(--sb-r-md,14px); font:650 14px/1 var(--font-body); }
 :is(.checkin-page, .schedule-page, .messages-page, .updates-page) .clients-tab.active{ background:var(--sb-lens-bg); color:var(--on-primary); box-shadow:var(--sb-lens-shadow); }
 
 :is(.checkin-page, .schedule-page, .messages-page, .updates-page) .clients-btn-primary{
@@ -799,7 +799,7 @@
 :is(.checkin-page, .schedule-page, .messages-page, .updates-page) input[type="date"],
 :is(.checkin-page, .schedule-page, .messages-page, .updates-page) input[type="time"],
 :is(.checkin-page, .schedule-page, .messages-page, .updates-page) input[type="number"]{
-    border-radius:16px;
+    border-radius:var(--sb-r-lg,16px);
     background:var(--sb-inset-bg);
     border:1px solid var(--sb-inset-border);
     box-shadow:var(--sb-inset-shadow);
@@ -845,7 +845,7 @@
 .clients-cell{ font-size:14px; color:var(--text); min-width:0; display:flex; flex-direction:column; gap:2px; }
 .clients-cell-sub, .clients-cell-quiet{ color:var(--muted); font-size:13px; }
 .clients-cell-who > span{ color:var(--text-secondary); font-size:13px; }
-.clients-tag{ align-self:flex-start; padding:3px 7px; border-radius:4px; border:1px solid var(--border); font:600 10.5px/1.2 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+.clients-tag{ align-self:flex-start; padding:3px 7px; border-radius:var(--sb-r-xs,4px); border:1px solid var(--border); font:600 10.5px/1.2 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
 .clients-tag.is-bad{ color:var(--red); border-color:color-mix(in srgb, var(--red) 45%, transparent); }
 .clients-tag.is-warn{ color:var(--amber); border-color:color-mix(in srgb, var(--amber) 45%, transparent); }
 .clients-table .clients-btn-icon{ opacity:.6; }
@@ -869,13 +869,13 @@
 }
 
 /* Session plans: the coach's Schedule button and the attach dialog */
-.sched-plan{ display:block; width:100%; margin-top:6px; min-height:36px; padding:0 8px; border-radius:6px; border:1px dashed rgba(236,230,212,.3); background:none; color:var(--primary); font:600 11px var(--font-mono); letter-spacing:.06em; text-transform:uppercase; cursor:pointer; text-align:left; }
+.sched-plan{ display:block; width:100%; margin-top:6px; min-height:36px; padding:0 8px; border-radius:var(--sb-r-md,6px); border:1px dashed rgba(236,230,212,.3); background:none; color:var(--primary); font:600 11px var(--font-mono); letter-spacing:.06em; text-transform:uppercase; cursor:pointer; text-align:left; }
 .sched-plan.has{ border-style:solid; border-color:var(--primary); }
 .sp-dialog{ width:min(480px, calc(100vw - 24px)); }
 .sp-lbl{ font:600 11px var(--font-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text-secondary); }
 .sp-sub,.sp-hint{ font-size:13px; color:var(--text-secondary); margin:0; }
 .sp-seg{ display:flex; gap:6px; }
-.sp-seg button{ flex:1; min-height:44px; border-radius:6px; border:1px solid rgba(236,230,212,.16); background:none; color:var(--text); font:600 13px var(--font-body); cursor:pointer; }
+.sp-seg button{ flex:1; min-height:44px; border-radius:var(--sb-r-md,6px); border:1px solid rgba(236,230,212,.16); background:none; color:var(--text); font:600 13px var(--font-body); cursor:pointer; }
 .sp-seg button.on{ background:var(--primary); color:var(--on-primary); border-color:var(--primary); }
 .sp-lines{ list-style:none; margin:8px 0 0; padding:0; display:grid; gap:4px; }
 .sp-lines li{ display:grid; grid-template-columns:72px 1fr auto; gap:8px; font-size:14px; padding:6px 0; border-top:1px solid rgba(236,230,212,.1); }

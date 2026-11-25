@@ -26,7 +26,7 @@ html #weekSection .wk-miles.tg-totals{ flex:0 0 100%; order:3; margin-left:0; fo
 .tg-chip.is-on{ background:var(--primary); border-color:var(--primary); color:var(--on-primary); }
 .tg-dows, .tg-days{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; }
 .tg-dows span{ text-align:center; font-size:11px; color:var(--text-secondary, var(--muted)); padding-bottom:4px; }
-.tg-day{ min-height:52px; padding:5px; border-radius:8px; border:1px solid transparent; background:color-mix(in srgb, var(--surface-light) 70%, transparent); color:var(--text-secondary, var(--muted)); font:inherit; font-size:12px; text-align:left; display:flex; flex-direction:column; gap:5px; cursor:pointer; overflow:hidden; }
+.tg-day{ min-height:52px; padding:5px; border-radius:var(--sb-r-sm,8px); border:1px solid transparent; background:color-mix(in srgb, var(--surface-light) 70%, transparent); color:var(--text-secondary, var(--muted)); font:inherit; font-size:12px; text-align:left; display:flex; flex-direction:column; gap:5px; cursor:pointer; overflow:hidden; }
 .tg-day b{ font-weight:500; }
 .tg-day.is-out{ opacity:.4; }
 .tg-day.is-today{ border-color:var(--text); color:var(--text); }
@@ -37,7 +37,7 @@ html #weekSection .wk-miles.tg-totals{ flex:0 0 100%; order:3; margin-left:0; fo
 .tg-marks i{ width:8px; height:8px; border-radius:50%; background:var(--tg); }
 .tg-marks i.is-todo{ background:transparent; box-shadow:inset 0 0 0 2px var(--tg); }
 .tg-pills{ display:none; flex-direction:column; gap:3px; min-width:0; }
-.tg-pill{ display:block; padding:2px 6px; border-radius:4px; font-size:11px; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:var(--tg); color:var(--on-primary); }
+.tg-pill{ display:block; padding:2px 6px; border-radius:var(--sb-r-xs,4px); font-size:11px; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:var(--tg); color:var(--on-primary); }
 .tg-pill.is-todo{ background:color-mix(in srgb, var(--tg) 24%, transparent); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--tg) 80%, transparent); color:var(--text); }
 .tg-more{ font-size:11px; }
 @container (min-width:640px){
@@ -73,14 +73,14 @@ html #weekSection .wk-miles.tg-totals{ flex:0 0 100%; order:3; margin-left:0; fo
 
 /* ---- Today: day strip, today line, miles card ---- */
 .tg-strip{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:6px; text-align:center; }
-.tg-tile{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 0 7px; border-radius:12px; border:1.5px solid transparent; background:color-mix(in srgb, var(--surface-light) 70%, transparent); }
+.tg-tile{ display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 0 7px; border-radius:var(--sb-r-sm,12px); border:1.5px solid transparent; background:color-mix(in srgb, var(--surface-light) 70%, transparent); }
 .tg-tile small{ font-size:10px; color:var(--text-secondary, var(--muted)); }
 .tg-tile b{ font-size:13px; font-weight:600; }
 .tg-tile.is-today{ border-color:var(--text); }
 .tg-dots{ display:flex; gap:3px; justify-content:center; height:9px; margin-top:4px; }
 .tg-dots i{ width:8px; height:8px; border-radius:50%; background:var(--tg); }
 .tg-dots i.is-todo{ background:transparent; box-shadow:inset 0 0 0 1.5px var(--tg); }
-.tg-today{ display:flex; align-items:center; gap:10px; margin-top:12px; padding:8px 4px 8px 12px; border-radius:12px; background:color-mix(in srgb, var(--surface-light) 70%, transparent); }
+.tg-today{ display:flex; align-items:center; gap:10px; margin-top:12px; padding:8px 4px 8px 12px; border-radius:var(--sb-r-sm,12px); background:color-mix(in srgb, var(--surface-light) 70%, transparent); }
 .tg-today > i{ flex:0 0 4px; align-self:stretch; min-height:32px; border-radius:2px; background:var(--tg); }
 .tg-today-main{ flex:1 1 auto; min-width:0; }
 .tg-today-main strong{ display:block; }
@@ -93,8 +93,8 @@ html #weekSection .wk-miles.tg-totals{ flex:0 0 100%; order:3; margin-left:0; fo
 .tg-big{ display:flex; align-items:baseline; gap:8px; margin:4px 0 0; }
 .tg-big b{ font:800 30px/1 var(--font-display); }
 .tg-big span{ color:var(--text-secondary, var(--muted)); }
-.tg-bar{ height:8px; border-radius:4px; background:color-mix(in srgb, var(--primary) 18%, transparent); overflow:hidden; margin:6px 0 8px; }
-.tg-bar i{ display:block; height:100%; border-radius:4px; background:var(--primary); }
+.tg-bar{ height:8px; border-radius:var(--sb-r-xs,4px); background:color-mix(in srgb, var(--primary) 18%, transparent); overflow:hidden; margin:6px 0 8px; }
+.tg-bar i{ display:block; height:100%; border-radius:var(--sb-r-xs,4px); background:var(--primary); }
 .tg-side{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin:0; font-size:12px; color:var(--text-secondary, var(--muted)); }
 
 /* ---- Train: weekly miles graph ---- */

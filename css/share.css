@@ -9,7 +9,7 @@
 .ex-share-dialog [hidden]{ display:none !important; }
 .ex-share-dialog .sb-dialog-form{ max-height:calc(100dvh - 40px); overflow:auto; overscroll-behavior:contain; }
 .ex-share-preview{ margin-top:8px; display:flex; justify-content:center; align-items:center; min-height:120px; }
-.ex-share-preview img{ display:block; width:auto; max-width:100%; height:auto; max-height:min(52vh, 600px); border-radius:12px; border:1px solid var(--border); -webkit-touch-callout:default; user-select:auto; }
+.ex-share-preview img{ display:block; width:auto; max-width:100%; height:auto; max-height:min(52vh, 600px); border-radius:var(--sb-r-sm,12px); border:1px solid var(--border); -webkit-touch-callout:default; user-select:auto; }
 .ex-share-error{ display:flex; flex-direction:column; align-items:center; gap:10px; padding:18px 12px; text-align:center; color:var(--text-secondary, var(--muted)); }
 .ex-share-error p{ margin:0; }
 .ex-share-hint{ margin:10px 0 0; color:var(--muted); font-size:.85rem; line-height:1.4; }

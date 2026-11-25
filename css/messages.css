@@ -29,7 +29,7 @@
     overscroll-behavior:contain;
     padding:14px 12px;
     border:1px solid var(--border);
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     background:color-mix(in srgb, var(--surface) 70%, var(--bg));
 }
 
@@ -63,7 +63,7 @@
 .msg-bubble{
     position:relative;
     padding:9px 12px 6px;
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     background:var(--surface);
     border:1px solid var(--border);
     color:var(--text);
@@ -146,7 +146,7 @@
     max-height:160px;
     padding:12px 14px;
     border:1px solid var(--border);
-    border-radius:22px;
+    border-radius:var(--sb-r-xl,22px);
     background:var(--surface);
     color:var(--text);
     font-size:16px;
@@ -202,7 +202,7 @@
 ========================================================== */
 .msg-list{
     padding:16px 12px;
-    border-radius:26px;
+    border-radius:var(--sb-r-xl,26px);
     background:var(--sb-bubble-dark-bg);
     border:1px solid var(--sb-bubble-dark-border);
     box-shadow:var(--sb-bubble-dark-shadow);
@@ -218,7 +218,7 @@
 }
 .msg-bubble{
     padding:10px 14px 7px;
-    border-radius:20px;
+    border-radius:var(--sb-r-lg,20px);
     background:var(--sb-bubble-raised-bg);
     border-color:var(--sb-bubble-raised-border);
     box-shadow:inset 0 1px 0 rgba(255,244,222,.07), 0 6px 14px -10px rgba(0,0,0,.6);
@@ -236,7 +236,7 @@
 .msg-unsend::after{ content:""; position:absolute; inset:-8px -4px; }
 .msg-input{
     min-height:48px;
-    border-radius:24px;
+    border-radius:var(--sb-r-xl,24px);
     background:var(--sb-inset-bg);
     border:1px solid var(--sb-inset-border);
     box-shadow:var(--sb-inset-shadow);
@@ -286,7 +286,7 @@
 .msg-row.is-first{ margin-top:8px; }
 .msg-bubble{
     padding:8px 13px;
-    border-radius:20px;
+    border-radius:var(--sb-r-lg,20px);
     border:0;
     -webkit-touch-callout:none;
     outline-offset:2px;
@@ -316,7 +316,7 @@
 .msg-receipt::first-line{ font-weight:600; }
 
 /* Typing dots. */
-.msg-typing{ align-self:flex-start; position:relative; display:flex; gap:5px; margin-top:8px; padding:12px 14px; border-radius:20px; background:var(--surface); }
+.msg-typing{ align-self:flex-start; position:relative; display:flex; gap:5px; margin-top:8px; padding:12px 14px; border-radius:var(--sb-r-lg,20px); background:var(--surface); }
 .msg-typing i{ width:8px; height:8px; border-radius:50%; background:var(--muted); animation:msg-dot 1.2s infinite ease-in-out; }
 .msg-typing i:nth-child(2){ animation-delay:.18s; }
 .msg-typing i:nth-child(3){ animation-delay:.36s; }
@@ -333,7 +333,7 @@
 /* The box: one pill with the send arrow inside it. */
 .msg-compose{ gap:0; }
 .msg-field{ position:relative; flex:1 1 100%; display:grid; grid-template-columns:minmax(0, 1fr); }
-.msg-input{ grid-area:1 / 1; min-height:44px; padding:11px 50px 11px 16px; border-radius:22px; }
+.msg-input{ grid-area:1 / 1; min-height:44px; padding:11px 50px 11px 16px; border-radius:var(--sb-r-xl,22px); }
 .msg-send{
     grid-area:1 / 1; justify-self:end; align-self:end;
     width:34px; height:34px; min-height:34px; margin:5px;
@@ -353,7 +353,7 @@
 .msg-press-lift.is-theirs .msg-bubble{ background:var(--sb-bubble-raised-bg); }
 .msg-press-lift.is-mine .msg-bubble{ background:var(--sb-lens-bg); color:var(--on-primary); }
 .msg-press-lift .msg-text{ white-space:pre-wrap; }
-.msg-press-menu{ width:min(230px, 70vw); border-radius:14px; overflow:hidden; background:rgba(24,48,38,.97); border:1px solid var(--sb-glass-border); box-shadow:0 18px 40px -12px rgba(0,0,0,.8); }
+.msg-press-menu{ width:min(230px, 70vw); border-radius:var(--sb-r-md,14px); overflow:hidden; background:rgba(24,48,38,.97); border:1px solid var(--sb-glass-border); box-shadow:0 18px 40px -12px rgba(0,0,0,.8); }
 .msg-press-menu button{ display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:46px; padding:0 16px; border:0; border-top:1px solid rgba(236,230,212,.08); background:none; color:var(--text); font:inherit; font-size:16px; text-align:left; cursor:pointer; }
 .msg-press-menu button:first-child{ border-top:0; }
 .msg-press-menu button:hover, .msg-press-menu button:focus-visible{ background:var(--sb-glass-bg); outline:0; }
@@ -379,7 +379,7 @@
 .msg-quote span{ overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 .msg-row.is-flash .msg-bubble{ animation:msg-flash 1.1s ease-out; }
 @keyframes msg-flash{ 0%, 40%{ filter:brightness(1.35); } 100%{ filter:none; } }
-.msg-replying{ flex:1 1 100%; display:flex; align-items:center; gap:8px; margin:0 0 6px; padding:6px 6px 6px 12px; border-left:3px solid var(--primary); border-radius:6px; background:var(--sb-glass-bg); color:var(--text-secondary); font-size:13px; }
+.msg-replying{ flex:1 1 100%; display:flex; align-items:center; gap:8px; margin:0 0 6px; padding:6px 6px 6px 12px; border-left:3px solid var(--primary); border-radius:var(--sb-r-xs,6px); background:var(--sb-glass-bg); color:var(--text-secondary); font-size:13px; }
 .msg-replying[hidden]{ display:none; }
 .msg-replying-text{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .msg-replying-x{ flex:0 0 44px; height:44px; margin:-8px 0; border:0; background:none; color:var(--muted); font-size:22px; cursor:pointer; }

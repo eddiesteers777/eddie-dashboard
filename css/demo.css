@@ -71,7 +71,7 @@
 }
 .dm-steps h3, .dm-note h3{ margin:0 0 2px; color:var(--text-secondary); font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
 .dm-steps p, .dm-note p{ margin:0; color:var(--text); font-size:15px; line-height:1.5; }
-.dm-note{ padding:12px 14px; border-radius:14px; background:var(--surface-light); }
+.dm-note{ padding:12px 14px; border-radius:var(--sb-r-md,14px); background:var(--surface-light); }
 .dm-link{ align-self:flex-start; }
 
 /* The How to button on the set-by-set screen and the session list. */

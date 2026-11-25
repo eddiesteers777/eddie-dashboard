@@ -920,7 +920,7 @@ function updateSummary(){
 
     ).innerHTML =
 
-        "<h3>Remaining Today</h3>" +
+        "<h3>Remaining today</h3>" +
 
         html;
 

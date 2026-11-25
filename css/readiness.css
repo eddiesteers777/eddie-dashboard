@@ -8,7 +8,7 @@
     margin:0 0 18px;
     padding:20px;
     border:1px solid var(--border);
-    border-radius:18px;
+    border-radius:var(--sb-r-lg,18px);
     background:var(--surface);
 }
 .rd-card[hidden], .rd-card [hidden]{ display:none !important; }
@@ -61,7 +61,7 @@
 .rd-advice-box{
     margin-top:16px;
     padding:12px 14px;
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:rgba(255,255,255,.04);
 }
 .rd-advice{ margin:0; color:var(--text); font-size:.95rem; line-height:1.45; }
@@ -92,7 +92,7 @@
     position:relative;
     padding:11px 12px 14px;
     border:1px solid var(--border);
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:rgba(255,255,255,.02);
     overflow:hidden;
 }
@@ -130,7 +130,7 @@
     align-items:center;
     gap:3px;
     padding:7px 0 6px;
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
     background:rgba(255,255,255,.03);
     border-top:3px solid rgba(255,255,255,.08);
 }
@@ -146,7 +146,7 @@
     gap:10px;
     margin-top:16px;
     padding:12px 14px;
-    border-radius:12px;
+    border-radius:var(--sb-r-sm,12px);
     background:rgba(255,255,255,.03);
 }
 .rd-sleep > svg{ width:18px; height:18px; flex-shrink:0; margin-top:2px; color:var(--primary); }
@@ -228,7 +228,7 @@
     display:grid; place-items:center;
     min-height:48px;
     border:1px solid var(--border);
-    border-radius:14px;
+    border-radius:var(--sb-r-md,14px);
     background:rgba(255,255,255,.03);
     color:var(--text);
     font-weight:700; font-size:1.05rem;
@@ -327,7 +327,7 @@
 /* THIS WEEK (js/thisWeekCard.js): the weekly decision on the coach's Today */
 .tw-card:empty{ display:none; }
 .tw-card[hidden]{ display:none !important; }
-.tw-card{ margin:0 0 20px; padding:18px 20px; border:1px solid var(--border); border-left:4px solid var(--good, var(--green)); border-radius:16px; background:var(--surface); }
+.tw-card{ margin:0 0 20px; padding:18px 20px; border:1px solid var(--border); border-left:4px solid var(--good, var(--green)); border-radius:var(--sb-r-lg,16px); background:var(--surface); }
 .tw-card.is-absorb{ border-left-color:var(--primary); }
 .tw-card.is-ease{ border-left-color:var(--amber); }
 .tw-card.is-recover, .tw-card.is-checkin{ border-left-color:var(--bad, var(--red)); }
@@ -367,7 +367,7 @@
 /* Compact, expandable decision card on Today. Weekly Review remains full-size. */
 .tw-card{
     margin-bottom:18px;padding:15px 18px;border:1px solid rgba(235,232,220,.085);
-    border-left:3px solid var(--good,var(--green));border-radius:20px;
+    border-left:3px solid var(--good,var(--green));border-radius:var(--sb-r-lg,20px);
     background:linear-gradient(145deg,rgba(25,44,32,.97),rgba(12,25,18,.98));
     box-shadow:0 16px 38px rgba(0,0,0,.17),inset 0 1px 0 rgba(255,255,255,.025);
 }
@@ -399,7 +399,7 @@
 .tw-details .tw-actions,.tw-details .tw-done{margin-top:12px}
 .tw-details .tw-link{margin-top:10px}
 @media (max-width:700px){
-    .tw-card{padding:13px 14px;border-radius:17px}
+    .tw-card{padding:13px 14px;border-radius:var(--sb-r-lg,17px)}
     .tw-compact-head{grid-template-columns:minmax(0,1fr) auto;gap:5px 10px}
     .tw-compact-title{grid-column:1;grid-row:1}
     .tw-compact-head .tw-hint{grid-column:1 / -1;grid-row:2;font-size:.8rem}
@@ -439,7 +439,7 @@
 .rd-body{
     position:relative;
     padding:20px 18px 14px;
-    border-radius:28px;
+    border-radius:var(--sb-r-xl,28px);
     background:linear-gradient(180deg,rgba(236,230,212,.075),rgba(236,230,212,.02) 46%,rgba(236,230,212,.035));
     border:1px solid rgba(236,230,212,.12);
     box-shadow:inset 0 1px 0 rgba(255,244,222,.1),inset 0 0 40px rgba(255,244,222,.02),0 22px 44px -26px rgba(0,0,0,.7);
@@ -537,7 +537,7 @@
 .rd-body-top .rd-line{ margin-top:6px; font-size:14.5px; }
 
 /* B (2026-11-13): the inner card (tabs + one 4-week panel) and today's numbers in one row */
-.rd-lens{ margin-top:14px; border:1px solid var(--border); border-radius:16px; background:rgba(var(--sb-f-080f16),.32); overflow:hidden; }
+.rd-lens{ margin-top:14px; border:1px solid var(--border); border-radius:var(--sb-r-lg,16px); background:rgba(var(--sb-f-080f16),.32); overflow:hidden; }
 .rd-tabs{ display:flex; gap:4px; padding:8px 8px 0; overflow-x:auto; scrollbar-width:none; }
 .rd-tabs::-webkit-scrollbar{ display:none; }
 .rd-tab{ appearance:none; flex:none; min-height:44px; padding:0 14px; border:0; border-radius:99px; background:none; color:var(--muted); font:600 13px var(--font-body); cursor:pointer; white-space:nowrap; }
@@ -585,7 +585,7 @@ button.rd-cell.on small{ color:var(--primary); }
 /* Connect sheet (opens on Today instead of sending people to Settings first) */
 .rd-sheet{ border:1px solid rgba(var(--sb-mist-rgb),.22); border-radius:24px 24px 0 0; padding:14px 20px 26px; width:min(100%,480px); max-width:100%; margin:auto auto 0; background:linear-gradient(180deg,rgb(var(--sb-f-2c4054)),rgb(var(--sb-f-1d2a36))); color:var(--text); box-shadow:0 -12px 40px rgba(0,0,0,.5); }
 .rd-sheet::backdrop{ background:rgba(var(--sb-f-080e14),.6); }
-.rd-sheet .rd-grab{ width:38px; height:4px; border-radius:4px; background:var(--border); margin:0 auto 16px; }
+.rd-sheet .rd-grab{ width:38px; height:4px; border-radius:var(--sb-r-xs,4px); background:var(--border); margin:0 auto 16px; }
 .rd-sheet h3{ margin:0 0 8px; font:800 26px/1 var(--font-display); text-transform:uppercase; }
 .rd-sheet p{ margin:0; font-size:14.5px; color:var(--text-secondary); }
 .rd-sheet ul{ list-style:none; padding:0; margin:12px 0 16px; }

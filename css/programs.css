@@ -112,7 +112,7 @@
     background:rgba(201,173,132,.06);
     border:1px solid rgba(201,173,132,.22);
     border-left:3px solid var(--primary);
-    border-radius:10px;
+    border-radius:var(--sb-r-sm,10px);
 }
 .program-coach-note strong{display:block;font-size:11px;color:var(--primary);margin-bottom:3px;}
 .program-coach-note p{margin:0;font-size:12.5px;line-height:1.45;color:var(--text);}
