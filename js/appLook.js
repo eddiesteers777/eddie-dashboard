@@ -164,9 +164,14 @@ function watchSurfaces() {
     queue(); addEventListener("load", queue); addEventListener("resize", queue);
 }
 
+// Since 2026-11-25 every app page sets the look before its first paint (js/appLookBoot.js plus static links to both
+// stylesheets in <head>), so html.al-on and the background layer are usually here already. This fills in anything a
+// page is missing and starts the dark-panel tagging, once per page.
+let started = false;
 export function applyAppLook() {
-    if (document.documentElement.classList.contains("al-on") || document.documentElement.classList.contains("sb-guest")) return;
-    if (!document.querySelector('link[href$="css/appLook.css"]')) {
+    if (started || document.documentElement.classList.contains("sb-guest")) return;
+    started = true;
+    if (!document.querySelector('link[href*="css/appLook.css"]')) {
         const link = document.createElement("link");
         link.rel = "stylesheet";
         link.href = new URL("../css/appLook.css", import.meta.url).href;
@@ -176,12 +181,13 @@ export function applyAppLook() {
         light.href = new URL("../css/appLight.css", import.meta.url).href;
         document.head.append(light);
     }
-    const page = (location.pathname.split("/").pop() || "index.html").replace(".html", "") || "index";
-    const bg = document.createElement("div");
-    bg.className = "al-bg";
-    bg.setAttribute("aria-hidden", "true");
     // Plain fog-blue ground on every app page (Eddie, 2026-11-02): no drawing behind the page.
-    document.body.prepend(bg);
+    if (!document.querySelector("body>.al-bg")) {
+        const bg = document.createElement("div");
+        bg.className = "al-bg";
+        bg.setAttribute("aria-hidden", "true");
+        document.body.prepend(bg);
+    }
     document.documentElement.classList.add("al-on");
     watchSurfaces();
 }
