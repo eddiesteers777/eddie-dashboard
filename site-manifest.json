@@ -522,8 +522,6 @@
   ],
   "styles": [
     "css/analytics.css",
-    "css/appLight.css",
-    "css/appLook.css",
     "css/athlete-state.css",
     "css/checkin.css",
     "css/client-hub.css",
@@ -576,6 +574,7 @@
     "css/settings.css",
     "css/seventyfive.css",
     "css/share.css",
+    "css/skin.css",
     "css/soccerPage.css",
     "css/start.css",
     "css/stravaIntegration.css",

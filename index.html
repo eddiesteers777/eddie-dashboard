@@ -67,10 +67,9 @@
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="icons/icon-512.png">
 
-    <!-- The app's look from the first frame (js/appLookBoot.js). Keep these three lines last in <head>. -->
+    <!-- The app's look from the first frame (js/appLookBoot.js, css/skin.css). Keep these two lines last in <head>. -->
     <script src="js/appLookBoot.js"></script>
-    <link rel="stylesheet" href="css/appLook.css">
-    <link rel="stylesheet" href="css/appLight.css">
+    <link rel="stylesheet" href="css/skin.css">
 </head>
 
 <body class="page-today">
@@ -155,7 +154,7 @@
             </div>
 
             <!-- Post-run check-in (js/effortCard.js mountCheckinStrip): only while today's watch run has no effort answer.
-                 Its own row across the header, under the greeting (and the compass, js/appLook.js). -->
+                 Its own row across the header, under the greeting. -->
             <!-- Morning check-in (js/readinessCard.js): in the header until today's check-in is done, only while the Readiness card shows. -->
             <div id="morningStrip" class="ci-strip" role="region" aria-label="Morning check-in" hidden></div>
             <div id="checkinStrip" class="ci-strip" role="region" aria-label="Check in on today's run" hidden></div>
