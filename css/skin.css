@@ -1028,6 +1028,16 @@ html.al-on:not(.sb-guest) .eos-navbar .eos-nav-right .account-btn{flex:1;display
 html.al-on:not(.sb-guest) .eos-navbar .sb-side-who{display:flex;flex-direction:column;line-height:1.25;min-width:0}
 html.al-on:not(.sb-guest) .eos-navbar .sb-side-who strong{color:var(--sb-on-card)}
 html.al-on:not(.sb-guest) .eos-navbar .sb-side-who small{color:var(--sb-on-card-3)}
+/* Phone and computer alike (fix 2026-11-25, Eddie's phone screenshot): the old computer-only sidebar rules in css/style.css
+   styled the wordmark, hid the buttons' glass shine and sized the photo; the drawer needs the same on a phone. */
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-brand{font:800 19px/1 var(--font-brand);letter-spacing:.08em;text-transform:uppercase;text-decoration:none}
+html.al-on:not(.sb-guest) .eos-navbar :is(.search-btn,.bell-btn,.account-btn)::before{display:none!important}
+html.al-on:not(.sb-guest) .eos-navbar :is(.search-btn,.bell-btn,.account-btn){-webkit-backdrop-filter:none;backdrop-filter:none}
+html.al-on:not(.sb-guest) .eos-navbar .eos-nav-right .account-btn{width:auto;height:auto;min-width:0;place-items:unset;overflow:hidden}
+html.al-on:not(.sb-guest) .eos-navbar .eos-nav-right .account-avatar{flex:0 0 40px;width:40px;height:40px;border:1px solid rgba(var(--sb-mist-rgb),.22);background:rgba(255,255,255,.06)}
+html.al-on:not(.sb-guest) .eos-navbar .eos-nav-right .bell-btn{flex:0 0 40px;width:40px;height:40px;border-radius:12px;border:1px solid rgba(var(--sb-mist-rgb),.22);background:rgba(255,255,255,.06);box-shadow:none;color:var(--sb-on-card)}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-who strong{font:600 14px var(--font-body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-who small{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 html.al-on:not(.sb-guest) .eos-navbar :is(.sb-side-fold,.sb-side-close){position:absolute;top:16px;right:12px;width:40px;height:40px;place-items:center;padding:0;border-radius:12px;cursor:pointer;
   border:1px solid rgba(var(--sb-mist-rgb),.22);background:rgba(255,255,255,.06);color:var(--sb-on-card);transition:background .2s,transform .28s}
 html.al-on:not(.sb-guest) .eos-navbar :is(.sb-side-fold,.sb-side-close):hover{background:rgba(255,255,255,.14)}
