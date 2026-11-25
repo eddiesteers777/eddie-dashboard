@@ -349,6 +349,9 @@ fetch("components/header.html")
         const { hydrate, icon } = await import("./icons.js");
         hydrate();
 
+        // The side menu: fold to icons on a computer, a drawer from the top bar's Menu on a phone (step 5).
+        import("./sideMenu.js").then(m => m.wireSideMenu()).catch(() => {});
+
         // Southbound reactions on every <textarea data-emoji> (js/emojiPicker.js).
         import("./emojiPicker.js").then(m => m.enableEmojiPickers()).catch(() => {});
 
@@ -504,6 +507,15 @@ fetch("components/header.html")
         if (searchBtn && searchOverlay) {
 
             searchBtn.addEventListener("click", openSearch);
+            // The side menu's Search on a computer opened nothing before step 5 (2026-11-25); it opens the same search.
+            document.querySelector(".eos-navbar .search-btn")?.addEventListener("click", openSearch);
+            document.addEventListener("keydown", event => {
+                if (event.key === "Escape" && searchOverlay.classList.contains("open")) closeSearch();
+            });
+            // On a computer the search is a panel over the dimmed page: a click on the dim closes it.
+            searchOverlay.addEventListener("click", event => {
+                if (event.target === searchOverlay && window.matchMedia("(min-width:901px)").matches) closeSearch();
+            });
             searchCloseBtn?.addEventListener("click", closeSearch);
             searchInput?.addEventListener("input", () => renderSearchResults(searchInput.value));
 

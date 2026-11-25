@@ -7,10 +7,11 @@ import vm from "node:vm";
 
 const boot = readFileSync(new URL("../js/appLookBoot.js", import.meta.url), "utf8");
 
-function run({ stored, dark = false, pb = false } = {}) {
+function run({ stored, dark = false, pb = false, sideMin } = {}) {
     const classes = new Set(pb ? ["pb-app"] : []);
     const attrs = {};
     const store = new Map(stored === undefined ? [] : [["southbound-look", stored]]);
+    if (sideMin !== undefined) store.set("southbound-side-min", sideMin);
     const events = [];
     const html = {
         classList: { contains: c => classes.has(c), add: c => classes.add(c), toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)) },
@@ -77,7 +78,9 @@ test("the Playbook keeps its own look", () => {
 });
 
 test("skin.css: part 3 is light mode only, parts 1 and 2 never mention it", () => {
-    const css = readFileSync(new URL("../css/skin.css", import.meta.url), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    // Part 4 (the side menu, step 5) works in both modes, so the check stops where it starts.
+    const raw = readFileSync(new URL("../css/skin.css", import.meta.url), "utf8");
+    const css = raw.slice(0, raw.indexOf("/* Part 4:")).replace(/\/\*[\s\S]*?\*\//g, "");
     const i = css.indexOf("html.al-light");
     assert.ok(i > 0);
     const head = css.slice(0, i);
@@ -139,4 +142,10 @@ test("text stays readable in every colourway", async () => {
 
 test("the look is saved to the account", () => {
     assert.match(readFileSync(new URL("../js/cloudSync.js", import.meta.url), "utf8"), /"southbound-look"/);
+});
+
+test("the side menu starts folded only when this device saved it folded (step 5)", () => {
+    assert.ok(!run().classes.has("sb-side-min"));
+    assert.ok(!run({ sideMin: "0" }).classes.has("sb-side-min"));
+    assert.ok(run({ sideMin: "1" }).classes.has("sb-side-min"));
 });

@@ -4587,7 +4587,7 @@ body.page-today .eos-today-card.th-card:not(#todayCard){
 
 /* The header has no logo or wordmark (2026-10-15): search sits alone on the left. */
 .eos-navbar .eos-nav-left > .search-btn{ grid-column:1; grid-row:1; justify-self:start; }
-.eos-mobile-topbar > #mobileSearchBtn{ grid-column:1; grid-row:1; justify-self:start; }
+.eos-mobile-topbar > .sb-topbar-left{ grid-column:1; grid-row:1; justify-self:start; display:flex; align-items:center; gap:8px; }
 
 /* ==========================================================
    TODAY, THE DEMO'S CARD (after step 7, 2026-10-15): the picture and its labels

@@ -413,6 +413,7 @@
     "js/seventyFive.js",
     "js/seventyFiveCloud.js",
     "js/seventyFivePage.js",
+    "js/sideMenu.js",
     "js/signInCheck.js",
     "js/signInErrors.js",
     "js/signInRetry.js",

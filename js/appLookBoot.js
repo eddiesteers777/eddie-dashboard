@@ -57,6 +57,9 @@
     }
     var cur = read();
     h.classList.add("al-on");
+    // Side menu folded to icons on a computer (step 5, js/sideMenu.js). This device only, read here so the page
+    // paints at the right width.
+    try { if (localStorage.getItem("southbound-side-min") === "1") h.classList.add("sb-side-min"); } catch (e) { /* storage unavailable: open */ }
     apply(cur);
     function set(o) {
         cur = clean({ c: (o && o.c) || cur.c, m: (o && o.m) || cur.m, at: Date.now() });

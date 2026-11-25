@@ -978,3 +978,108 @@ html.al-light .sb-eyebrow{color:var(--text-secondary)!important}
 html.al-light .coach-pb .coach-clients-all{color:var(--sb-ink-link)!important}
 html.al-light{--gl:linear-gradient(180deg,var(--sb-card-top),var(--sb-card-bottom))}
 html.al-light :is(.running-calendar-wrap,.running-day-detail,.running-fold,.running-tl-card,.more-page .more-row,.more-page .eos-more-account,.running-view-toggle,.running-section-tabs){--text:var(--sb-on-card);--text-secondary:var(--sb-on-card-2);--muted:var(--sb-on-card-3);color:var(--text)}
+
+/* Part 4: the side menu (step 5, 2026-11-25), after Anchor Board's side panel (css/home.css .hm-side): a deep panel in
+   the colourway, each section an icon tile with a one-line hint under its name, gold on the section you're in.
+   Computer: the left menu; the button by the wordmark folds it to icons (html.sb-side-min). Phone: the top bar's Menu
+   slides the same menu in as a drawer (html.sb-drawer); the bottom tabs stay. js/sideMenu.js does the clicks.
+   Guests (html.sb-guest) and the Playbook (no html.al-on) keep their own bar. Colours are tokens only. */
+html.al-on{--sb-side-w:272px;--sb-side-min:76px}
+.sb-side-hint,.sb-side-fold,.sb-side-close{display:none}
+html:not(.al-on) .sb-menu-btn,html.sb-guest .sb-menu-btn{display:none!important}
+html.al-on:not(.sb-guest) .eos-navbar{
+  background:linear-gradient(180deg,rgba(var(--sb-glass-top-rgb),.98) 0%,rgba(var(--sb-glass-rgb),.99) 55%,rgb(var(--sb-deep-rgb)) 100%)!important;
+  border:0!important;border-right:1px solid rgba(var(--sb-mist-rgb),.1)!important;
+  box-shadow:12px 0 40px rgba(var(--sb-deep-rgb),.22)!important;-webkit-backdrop-filter:none;backdrop-filter:none;
+  --text:var(--sb-on-card);--text-secondary:var(--sb-on-card-2);--muted:var(--sb-on-card-3);color:var(--sb-on-card)}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-brand{display:block;padding:10px 56px 2px 10px;color:var(--sb-on-card);white-space:nowrap}
+html.al-on:not(.sb-guest) .eos-navbar .eos-nav-left{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+html.al-on:not(.sb-guest) .eos-navbar .search-btn{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;height:44px;padding:0 14px;
+  border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(var(--sb-mist-rgb),.16);color:var(--sb-on-card-2);box-shadow:none;font-size:14px}
+html.al-on:not(.sb-guest) .eos-navbar .search-btn:hover{background:rgba(255,255,255,.1)}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-search{display:inline}
+html.al-on:not(.sb-guest) .eos-navbar .eos-nav-links{display:flex;flex-direction:column;align-items:stretch;gap:2px;padding:0;border:0;background:none;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none}
+html.al-on:not(.sb-guest) .eos-navbar .eos-dropdown{display:block;background:none!important;border:0!important;box-shadow:none!important}
+html.al-on:not(.sb-guest) .eos-navbar :is(.eos-nav-item,.eos-dropdown-trigger){display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:52px;
+  padding:6px 8px;gap:12px;border-radius:14px;background:none;box-shadow:none;color:var(--sb-on-card);text-decoration:none;transition:background .2s}
+html.al-on:not(.sb-guest) .eos-navbar :is(.eos-nav-item,.eos-dropdown-trigger):hover{background:rgba(255,255,255,.08)}
+html.al-on:not(.sb-guest) .eos-navbar :is(.eos-nav-item,.eos-dropdown-trigger):focus-visible{outline:none;box-shadow:0 0 0 2px var(--sb-gold)}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-ic{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:11px;opacity:1;
+  background:rgba(var(--sb-accent-rgb),.14);color:rgb(var(--sb-accent-rgb));transition:background .2s,color .2s}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-ic .ui-icon{width:19px;height:19px}
+html.al-on:not(.sb-guest) .eos-navbar :is(.eos-nav-item,.eos-dropdown-trigger):hover .sb-side-ic,
+html.al-on:not(.sb-guest) .eos-navbar :is(.eos-nav-item.active,.eos-dropdown-trigger.section-active) .sb-side-ic{background:var(--sb-gold);color:rgb(var(--sb-deep-rgb))}
+html.al-on:not(.sb-guest) .eos-navbar :is(.eos-nav-item.active,.eos-dropdown-trigger.section-active){background:rgba(255,255,255,.1);box-shadow:none}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-txt{display:flex;flex-direction:column;min-width:0;line-height:1.25;white-space:nowrap}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-txt>span{font-size:15px;font-weight:600}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-hint{display:block;font-size:12px;font-weight:500;color:var(--sb-on-card-2);overflow:hidden;text-overflow:ellipsis}
+html.al-on:not(.sb-guest) .eos-navbar .eos-chevron{margin-left:auto;color:var(--sb-on-card-3)}
+html.al-on:not(.sb-guest) .eos-navbar .eos-dropdown-menu{position:static;display:none;min-width:0;margin:2px 0 8px 25px;padding:2px 0 2px 19px;opacity:1;visibility:visible;transform:none;
+  border:0;border-left:1px solid rgba(var(--sb-mist-rgb),.16);border-radius:0;background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+html.al-on:not(.sb-guest) .eos-navbar .eos-dropdown[open]>.eos-dropdown-menu{display:block}
+html.al-on:not(.sb-guest) .eos-navbar .eos-dropdown-menu::before{display:none}
+html.al-on:not(.sb-guest) .eos-navbar .eos-dropdown-link{display:flex;align-items:center;min-height:42px;padding:0 12px;border-radius:10px;font-size:14px;color:var(--sb-on-card-2);background:none;box-shadow:none}
+html.al-on:not(.sb-guest) .eos-navbar .eos-dropdown-link:hover{background:rgba(255,255,255,.06);color:var(--sb-on-card)}
+html.al-on:not(.sb-guest) .eos-navbar .eos-dropdown-link.active{background:rgba(255,255,255,.08);color:var(--sb-on-card);box-shadow:inset 3px 0 0 var(--sb-gold)}
+html.al-on:not(.sb-guest) .eos-navbar .eos-nav-right{margin-top:auto;display:flex;flex-direction:row;align-items:center;gap:10px;padding-top:14px;border-top:1px solid rgba(var(--sb-mist-rgb),.12)}
+html.al-on:not(.sb-guest) .eos-navbar .eos-nav-right .account-btn{flex:1;display:flex;align-items:center;justify-content:flex-start;gap:12px;min-height:52px;padding:4px;
+  background:none;border:0;border-radius:12px;box-shadow:none;text-align:left;color:var(--sb-on-card)}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-who{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-who strong{color:var(--sb-on-card)}
+html.al-on:not(.sb-guest) .eos-navbar .sb-side-who small{color:var(--sb-on-card-3)}
+html.al-on:not(.sb-guest) .eos-navbar :is(.sb-side-fold,.sb-side-close){position:absolute;top:16px;right:12px;width:40px;height:40px;place-items:center;padding:0;border-radius:12px;cursor:pointer;
+  border:1px solid rgba(var(--sb-mist-rgb),.22);background:rgba(255,255,255,.06);color:var(--sb-on-card);transition:background .2s,transform .28s}
+html.al-on:not(.sb-guest) .eos-navbar :is(.sb-side-fold,.sb-side-close):hover{background:rgba(255,255,255,.14)}
+html.al-on:not(.sb-guest) .eos-navbar :is(.sb-side-fold,.sb-side-close) .ui-icon{width:18px;height:18px}
+/* Computer: the left menu, folding to icons. */
+@media (min-width:901px){
+  html.al-on:not(.sb-guest) body{padding-left:var(--sb-side-w);transition:padding-left .28s cubic-bezier(.2,.8,.2,1)}
+  html.al-on:not(.sb-guest) .eos-navbar{width:var(--sb-side-w);padding:16px 12px;gap:14px;overflow-x:hidden;transition:width .28s cubic-bezier(.2,.8,.2,1)}
+  html.al-on:not(.sb-guest) .eos-navbar .sb-side-fold{display:grid}
+  html.al-on.sb-side-min:not(.sb-guest) body{padding-left:var(--sb-side-min)}
+  html.al-on.sb-side-min:not(.sb-guest) .eos-navbar{width:var(--sb-side-min);padding:16px 10px;align-items:center}
+  html.al-on.sb-side-min:not(.sb-guest) .eos-navbar .sb-side-fold{position:static;flex:none;margin:0 auto;transform:rotate(180deg);background:var(--sb-gold);border-color:var(--sb-gold);color:rgb(var(--sb-deep-rgb))}
+  html.al-on.sb-side-min:not(.sb-guest) .eos-navbar :is(.sb-side-brand,.sb-side-txt,.eos-chevron,.sb-side-search,.sb-side-who,.eos-dropdown-menu){display:none!important}
+  html.al-on.sb-side-min:not(.sb-guest) .eos-navbar :is(.eos-nav-left,.eos-nav-links,.eos-dropdown){width:100%}
+  html.al-on.sb-side-min:not(.sb-guest) .eos-navbar :is(.eos-nav-item,.eos-dropdown-trigger,.search-btn){justify-content:center;padding:6px 0}
+  html.al-on.sb-side-min:not(.sb-guest) .eos-navbar .eos-nav-right{flex-direction:column;width:100%}
+  html.al-on.sb-side-min:not(.sb-guest) .eos-navbar .eos-nav-right .account-btn{flex:none;justify-content:center}
+}
+/* Phone: the same menu as a drawer from the left. */
+@media (max-width:900px){
+  html.al-on:not(.sb-guest) body .eos-navbar{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:14px;
+    position:fixed;inset:0 auto 0 0;z-index:3000;width:min(300px,86vw);max-width:none;height:100%;margin:0;
+    padding:calc(12px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom));overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+    border-radius:0 22px 22px 0;transform:translateX(-102%);visibility:hidden;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s linear .28s}
+  html.al-on.sb-drawer:not(.sb-guest) body .eos-navbar{transform:none;visibility:visible;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s}
+  html.al-on:not(.sb-guest) .eos-navbar .sb-side-close{display:grid;top:calc(12px + env(safe-area-inset-top))}
+  html.al-on:not(.sb-guest) .eos-navbar .eos-dropdown-link{min-height:44px;font-size:15px}
+  html.al-on.sb-drawer body{overflow:hidden}
+  .sb-scrim{position:fixed;inset:0;z-index:2999;background:rgba(var(--sb-deep-rgb),.5);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);animation:sb-fade .28s ease both}
+}
+@keyframes sb-fade{from{opacity:0}to{opacity:1}}
+/* Search on a computer: the side menu's Search opens the same search as the phone, as a panel over the page. */
+@media (min-width:901px){
+  html.al-on .eos-search-overlay{display:flex;flex-direction:column;align-items:center;position:fixed;inset:0;z-index:4000;padding:12vh 24px 24px;
+    background:rgba(var(--sb-deep-rgb),.55);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s}
+  html.al-on .eos-search-overlay.open{opacity:1;visibility:visible}
+  html.al-on .eos-search-overlay>*{width:min(640px,100%)}
+  html.al-on .eos-search-bar{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;color:var(--sb-on-card);
+    background:linear-gradient(180deg,var(--sb-card-top),var(--sb-card-bottom));border:1px solid rgba(var(--sb-mist-rgb),.2);box-shadow:0 18px 44px rgba(var(--sb-deep-rgb),.4)}
+  html.al-on .eos-search-bar-icon{color:var(--sb-on-card-3)}
+  html.al-on .eos-search-input{flex:1;min-width:0;background:none;border:0;outline:none;color:var(--sb-on-card);font:inherit;font-size:16px}
+  html.al-on .eos-search-input::placeholder{color:var(--sb-on-card-3)}
+  html.al-on .eos-search-close{flex:none;display:grid;place-items:center;width:32px;height:32px;border:0;border-radius:50%;background:rgba(255,255,255,.08);color:var(--sb-on-card-2);cursor:pointer}
+  html.al-on .eos-search-results{display:flex;flex-direction:column;gap:2px;max-height:60vh;overflow-y:auto;margin-top:10px;padding:6px;border-radius:14px;
+    background:linear-gradient(180deg,var(--sb-card-top),var(--sb-card-bottom));border:1px solid rgba(var(--sb-mist-rgb),.2)}
+  html.al-on .eos-search-results:empty{display:none}
+  html.al-on .eos-search-result{display:flex;align-items:center;gap:14px;padding:10px 12px;border-radius:10px;color:var(--sb-on-card);text-decoration:none;font-size:15px;font-weight:650}
+  html.al-on .eos-search-result:is(:hover,:focus-visible){background:rgba(255,255,255,.08);outline:none}
+  html.al-on .eos-search-result-icon{flex:none;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:color-mix(in srgb,currentColor 16%,transparent)}
+  html.al-on .eos-search-result-icon .ui-icon{width:18px;height:18px}
+  html.al-on .eos-search-empty{padding:12px;color:var(--sb-on-card-3);font-size:14px}
+}
+@media (prefers-reduced-motion:reduce){
+  html.al-on body,html.al-on .eos-navbar,html.al-on .eos-navbar *,.sb-scrim,html.al-on .eos-search-overlay{transition:none!important;animation:none!important}
+}
