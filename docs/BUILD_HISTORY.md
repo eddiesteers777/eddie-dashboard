@@ -962,10 +962,10 @@ Step 3 of the Anchor Board reuse plan (Eddie picked "Start Night mode"). Setting
 ## 2026-11-25: Six colourways (branch `app-look-colorways`, no rules change)
 Step 4 of the Anchor Board reuse plan (Eddie picked "All six"). Settings > Look has a Colorway row: Fog, Forest, Pitch, Track, Dusk and Slate. Fog stays the default. The choice (with the mode) is saved to the account through the existing sync doc. To make it possible, every fog colour in `css/skin.css` and the app-only page stylesheets became a token (checked identical to before in Fog, rule by rule), and `scripts/build-colorways.mjs` writes each colourway's tokens by turning Fog to its hue, keeping depth and readable text.
 
-### 2026-11-25: Side menu fix on phones (branch `app-side-menu-fix`, no rules change)
+## 2026-11-25: Side menu (branch `app-side-menu`, no rules change)
+Step 5 of the Anchor Board look plan (Eddie: "Yes" to starting it). The computer sidebar restyled after Anchor Board's side panel: icon tiles, one-line hints, gold on the current section, colourway tokens only, and a fold-to-icons button saved on the device. Phones get a Menu button in the top bar that opens the same menu as a drawer; the bottom tabs stay. The sidebar's Search now opens the search on a computer. New: `js/sideMenu.js`, `css/skin.css` part 4, `menu` icon, `tests/sideMenu.test.mjs`. Not checked in a browser or on a phone when built.
+
+## 2026-11-25: Side menu fix on phones (branch `app-side-menu-fix`, no rules change)
 Eddie's phone screenshot of the drawer: the Southbound name was underlined, the search bar had the old glass shine, and his photo
 stretched across the account row with the name cut off. The computer-only sidebar rules in css/style.css did that styling, so
 css/skin.css part 4 now does it at every width: wordmark type, no shine or blur on the drawer's buttons, a 40px photo, the name cut with an ellipsis.
-
-## 2026-11-25: Side menu (branch `app-side-menu`, no rules change)
-Step 5 of the Anchor Board look plan (Eddie: "Yes" to starting it). The computer sidebar restyled after Anchor Board's side panel: icon tiles, one-line hints, gold on the current section, colourway tokens only, and a fold-to-icons button saved on the device. Phones get a Menu button in the top bar that opens the same menu as a drawer; the bottom tabs stay. The sidebar's Search now opens the search on a computer. New: `js/sideMenu.js`, `css/skin.css` part 4, `menu` icon, `tests/sideMenu.test.mjs`. Not checked in a browser or on a phone when built.
